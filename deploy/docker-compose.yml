@@ -1,0 +1,12 @@
+# Static site behind a reverse proxy / tunnel. PORT comes from .env next to this file.
+services:
+  visualizer:
+    image: nginx:alpine
+    container_name: ross-visualizer
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PORT:-8080}:80"
+    volumes:
+      - ./www:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    mem_limit: 64m

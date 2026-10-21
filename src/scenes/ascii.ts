@@ -109,6 +109,7 @@ function asciiOnly(s: string) {
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/[—–]/g, '-')
+    .replace(/[·•]/g, '|')
     .replace(/[^\x20-\x7e]/g, '?');
 }
 
