@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>ross_visualizer</title>
+    <meta name="description" content="Visualizer de música en tiempo real: los colores salen de la portada y el movimiento del sonido. Hecho por Rossmel Abasto." />
+    <meta name="theme-color" content="#0a0c08" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:title" content="ross_visualizer" />
+    <meta property="og:description" content="Tu música, hecha luz. Los colores salen de la portada; el movimiento, del sonido." />
+    <meta property="og:image" content="https://visualizer.rossmel.com/og.png" />
+    <meta property="og:url" content="https://visualizer.rossmel.com/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <canvas id="gl" aria-hidden="true"></canvas>
+
+    <div id="ui">
+      <header class="top">
+        <a class="brand" href="https://portfolio.rossmel.com/" target="_blank" rel="noopener">
+          <span class="brand-mark" aria-hidden="true"></span><span>ross_<b>visualizer</b></span>
+        </a>
+        <div class="now" id="now" hidden>
+          <img class="now-art" id="now-art" alt="" />
+          <div class="now-text">
+            <span class="now-title" id="now-title"></span>
+            <span class="now-artist" id="now-artist"></span>
+            <span class="now-progress" id="now-progress"><i></i></span>
+          </div>
+          <div class="now-links" id="now-links"></div>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="btn-lang" data-tip="ES/EN">ES</button>
+          <button class="icon-btn" id="btn-settings"></button>
+          <button class="icon-btn" id="btn-fullscreen"></button>
+        </div>
+      </header>
+
+      <section class="start" id="start">
+        <h1 id="t-tagline"></h1>
+        <p class="lead" id="t-lead"></p>
+        <div class="search">
+          <label class="search-box">
+            <span class="search-icon"></span>
+            <input id="search" type="search" autocomplete="off" spellcheck="false" />
+            <kbd>/</kbd>
+          </label>
+          <p class="search-hint" id="search-hint"></p>
+          <ul class="results" id="results" role="listbox"></ul>
+        </div>
+        <div class="divider"><span id="t-or"></span></div>
+        <div class="sources">
+          <button class="source" id="src-mic"></button>
+          <button class="source" id="src-system"></button>
+          <button class="source" id="src-file"></button>
+          <button class="source" id="src-demo"></button>
+          <input type="file" id="file-input" accept="audio/*,.mp3,.flac,.m4a,.ogg,.opus,.wav" hidden />
+        </div>
+        <p class="fine" id="t-privacy"></p>
+        <button class="start-close icon-btn" id="start-close" hidden></button>
+      </section>
+
+      <nav class="dock" id="dock" aria-label="Scenes">
+        <button class="dock-btn" id="btn-source"></button>
+        <button class="dock-btn" id="btn-play" hidden></button>
+        <button class="dock-btn" id="btn-next" hidden></button>
+        <span class="dock-sep"></span>
+        <div class="scenes" id="scenes" role="tablist"></div>
+      </nav>
+
+      <aside class="settings" id="settings" hidden>
+        <header>
+          <h2 id="t-settings"></h2>
+          <button class="icon-btn" id="settings-close"></button>
+        </header>
+        <label class="field">
+          <span id="t-sensitivity"></span>
+          <input type="range" id="sensitivity" min="0.4" max="2" step="0.05" value="1" />
+        </label>
+        <div class="field">
+          <span id="t-quality"></span>
+          <div class="seg" id="quality">
+            <button data-q="auto"></button><button data-q="high"></button><button data-q="low"></button>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="autocycle" /><span id="t-autocycle"></span></label>
+        <label class="toggle"><input type="checkbox" id="stats-toggle" /><span id="t-stats"></span></label>
+        <button class="share" id="btn-share"></button>
+        <p class="fine" id="t-keys"></p>
+        <p class="fine credit">
+          <span id="t-madeby"></span> <a href="https://portfolio.rossmel.com/" target="_blank" rel="noopener">Rossmel Abasto</a> ·
+          <a href="https://github.com/rossmelabasto/ross_visualizer" target="_blank" rel="noopener" id="t-code"></a>
+        </p>
+      </aside>
+
+      <pre class="stats" id="stats" hidden></pre>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="fallback" id="fallback" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
