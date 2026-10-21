@@ -86,6 +86,11 @@ class RollingStats {
     return this.values.length;
   }
 
+  /** Seconds of history currently held. */
+  get span() {
+    return this.times.length > 1 ? this.times[this.times.length - 1] - this.times[0] : 0;
+  }
+
   meanStd(): [number, number] {
     const n = this.values.length;
     if (!n) return [0, 0];
@@ -255,7 +260,8 @@ export class FeatureExtractor {
 
     const [km, ks] = this.kickStats.meanStd();
     const [fm, fs] = this.fluxStats.meanStd();
-    const warm = this.kickStats.count > 20;
+    // Warm-up by time, not frame count: slow devices may only give us ~10 frames per second.
+    const warm = this.kickStats.count >= 6 && this.kickStats.span > 0.8;
     const sinceBeat = now - this.lastBeat;
     let isBeat = false;
     if (warm && !f.silent && sinceBeat > 0.27) {

@@ -14,10 +14,10 @@ function spectrum(bumps: { from: number; to: number; db: number }[], floor = -95
 }
 
 /** Simulate `seconds` of a kick at `bpm` over a steady hi-hat bed, at 60 fps. */
-function runKick(bpm: number, seconds: number) {
+function runKick(bpm: number, seconds: number, fps = 60) {
   const fx = new FeatureExtractor(SR, FFT);
   const period = 60 / bpm;
-  const dt = 1 / 60;
+  const dt = 1 / fps;
   let beats = 0;
   for (let t = 0; t < seconds; t += dt) {
     const phase = t % period;
@@ -45,6 +45,12 @@ describe('FeatureExtractor', () => {
     expect(beats).toBeLessThanOrEqual(25);
     expect(Math.abs(fx.features.bpm - 120)).toBeLessThanOrEqual(2);
     expect(fx.features.bpmConfidence).toBeGreaterThan(0.5);
+  });
+
+  it('still finds beats when the page only gets ~12 frames per second', () => {
+    const { fx, beats } = runKick(100, 15, 12);
+    expect(beats).toBeGreaterThanOrEqual(18);
+    expect(Math.abs(fx.features.bpm - 100)).toBeLessThanOrEqual(3);
   });
 
   it('folds tempos into 80–180', () => {
