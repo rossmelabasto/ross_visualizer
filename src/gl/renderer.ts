@@ -17,6 +17,8 @@ export interface FrameState {
   drift: number;
   slowBass: number;
   slowEnergy: number;
+  /** Bass, mid and high smoothed over ~0.4 s. */
+  medBands: [number, number, number];
   features: AudioFeatures;
   palette: Float32Array;
   /** 0..1, how bright the current artwork is (scenes may tone down for pale covers). */
@@ -249,6 +251,7 @@ export class Renderer {
       .f('uDrift', frame.drift)
       .f('uSlowBass', frame.slowBass)
       .f('uSlowEnergy', frame.slowEnergy)
+      .f('uMedBands', ...frame.medBands)
       .f('uBass', f.bass)
       .f('uLowMid', f.lowMid)
       .f('uMid', f.mid)
@@ -326,7 +329,7 @@ export class Renderer {
       .f('uMix', b ? mix : 0)
       .f('uRes', this.width, this.height)
       .f('uTime', frame.time)
-      .f('uBloomAmt', opts.bloom * (0.7 + f.bass * 0.6))
+      .f('uBloomAmt', opts.bloom * (0.75 + frame.medBands[0] * 0.45))
       .f('uBeat', f.beat)
       .f('uTransparent', frame.transparent ? 1 : 0)
       .v3('uBg', frame.palette.subarray(0, 3));

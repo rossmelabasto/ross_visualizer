@@ -18,7 +18,7 @@
 
 - **Search any song** and it plays the 30-second preview (iTunes Search API, no login) while the visuals take the palette of its cover.
 - **Or listen to your own audio**: the microphone, your computer's audio (Chrome/Edge screen-share with "Share audio"), a local file (it reads the embedded cover from MP3/FLAC tags), or a built-in synth track.
-- **Seven scenes**, cross-faded: ink drops swirling in water (a real advection simulation), a nebula of gas and dust, a 120k-particle galaxy that morphs between spiral, barred, ring and elliptical shapes, an aurora over a lake, a kaleidoscope built from the artwork, a Swiss-cheese tunnel of contour lines that splits into holes, and a terminal that renders the spectrum in ASCII.
+- **Seven scenes**, cross-faded: ink drops swirling in water (a real advection simulation), a nebula of gas and dust, a 120k-particle galaxy that morphs between spiral, barred, ring and elliptical shapes, an aurora over a lake, a kaleidoscope built from the artwork, a Swiss-cheese tunnel: six separate tubes of contour lines, and the camera cuts through the walls from one to another on the beat, and a terminal that renders the spectrum in ASCII.
 - Works on phones: swipe to change scene, installable as a PWA, keeps the screen awake.
 
 Nothing is uploaded: all the audio analysis happens in your browser.

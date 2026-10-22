@@ -1,16 +1,17 @@
 import type { FrameState, Program, Renderer, Scene, Target } from '../gl/renderer';
 
-// Flying through Swiss cheese made of contour lines: a bending tunnel that keeps splitting into
-// several holes and merging back into one chamber. Each time it splits, the camera takes a
-// random hole. Rings and lengthwise "spokes" come from the same function, so they form one mesh.
+// Flying through Swiss cheese made of contour lines: six separate tubes bend along together
+// without ever touching, and on the beat the camera cuts through the wall into another one.
+// Rings and lengthwise "spokes" come from the same function, so they form one mesh.
 
 const RINGS = 72;
 const SEGMENTS = 480;
 const SPOKES = 28;
 const SPACING = 0.34;
-const HOLES = 3;
-/** The holes merge where sin(z * SPLIT_FREQ) = 0. */
-const SPLIT_FREQ = 0.06;
+const HOLES = 6; // one in the middle, five around it
+const RING_RADIUS = 2.3;
+const TUBE_RADIUS = 0.62;
+const SWITCH_SECONDS = 1.6;
 
 /** Mirrored in TypeScript below; keep both in sync. */
 const PATH_GLSL = /* glsl */ `
@@ -18,34 +19,21 @@ vec2 pathAt(float z) {
   return vec2(sin(z * 0.045) * 1.7 + sin(z * 0.11 + 1.3) * 0.65,
               cos(z * 0.037) * 1.25 + sin(z * 0.093 + 2.1) * 0.55);
 }
-// sin² keeps the split smooth: the holes leave and rejoin with zero slope.
-float spreadAt(float z) { float s = sin(z * ${SPLIT_FREQ}); return s * s * 1.9; }
 vec2 holeAt(float k, float z) {
-  float ang = k * TAU / ${HOLES}.0 + z * 0.025 + 0.6;
-  return pathAt(z) + spreadAt(z) * vec2(cos(ang), sin(ang));
+  if (k < 0.5) return pathAt(z);
+  float ang = (k - 1.0) * TAU / ${HOLES - 1}.0 + z * 0.02 + 0.6;
+  return pathAt(z) + ${RING_RADIUS} * vec2(cos(ang), sin(ang));
 }`;
 
 function pathAt(z: number): [number, number] {
   return [Math.sin(z * 0.045) * 1.7 + Math.sin(z * 0.11 + 1.3) * 0.65, Math.cos(z * 0.037) * 1.25 + Math.sin(z * 0.093 + 2.1) * 0.55];
 }
-function spreadAt(z: number) {
-  const s = Math.sin(z * SPLIT_FREQ);
-  return s * s * 1.9;
-}
 function holeAt(k: number, z: number): [number, number] {
-  const ang = (k * Math.PI * 2) / HOLES + z * 0.025 + 0.6;
   const [x, y] = pathAt(z);
-  const s = spreadAt(z);
-  return [x + s * Math.cos(ang), y + s * Math.sin(ang)];
+  if (k === 0) return [x, y];
+  const ang = ((k - 1) * Math.PI * 2) / (HOLES - 1) + z * 0.02 + 0.6;
+  return [x + RING_RADIUS * Math.cos(ang), y + RING_RADIUS * Math.sin(ang)];
 }
-
-/** Which hole the camera takes in the split that contains depth z. */
-function holeFor(z: number) {
-  const segment = Math.floor((z * SPLIT_FREQ) / Math.PI);
-  const h = Math.sin(segment * 127.1 + 311.7) * 43758.5453;
-  return Math.floor((h - Math.floor(h)) * HOLES);
-}
-const cameraAt = (z: number) => holeAt(holeFor(z), z);
 
 const VS = /* glsl */ `#version 300 es
 precision highp float;
@@ -56,6 +44,8 @@ uniform float uTravel;
 uniform float uRoll;
 uniform float uMode;  // 0 = rings, 1 = spokes
 uniform float uCamHole;
+uniform float uNextHole;
+uniform float uSwitch;  // 0..1 while the camera crosses into uNextHole
 uniform vec2 uCam;
 uniform vec2 uHeading;
 uniform float uBeat;
@@ -83,7 +73,7 @@ ${PATH_GLSL}
 void main() {
   bool rings = uMode < 0.5;
   float slot = rings ? float(gl_InstanceID % ${RINGS}) : float(gl_VertexID);
-  float hole = rings ? float(gl_InstanceID / ${RINGS}) : uCamHole;
+  float hole = rings ? float(gl_InstanceID / ${RINGS}) : (uSwitch < 0.5 ? uCamHole : uNextHole);
   float a = rings ? float(gl_VertexID) / SEGMENTS * TAU : (float(gl_InstanceID) + 0.5) / SPOKES * TAU;
   // Spokes wander a little instead of running dead straight.
   if (!rings) a += sin(slot * 0.35 + float(gl_InstanceID) * 1.7 + uDrift * 0.4) * 0.08;
@@ -92,18 +82,17 @@ void main() {
   float zView = (slot + 1.0 - phase) * SPACING;
   float zAbs = uTravel + zView;
   vec2 dir = vec2(cos(a), sin(a));
-  float split = smoothstep(0.0, 1.9, spreadAt(zAbs));
 
   // Irregular outline: noise sampled around a circle is seamless, and it slides along the tunnel.
   vec2 seed = vec2(hole * 17.3, hole * 9.1);
   float n = vnoise(dir * 1.3 + seed + vec2(zAbs * 0.07, -zAbs * 0.05)) + 0.5 * vnoise(dir * 3.1 + seed + vec2(-zAbs * 0.11, zAbs * 0.08));
-  float rad = (1.0 + (n - 0.75) * 0.75) * mix(1.25, 0.55, split);
+  float rad = (1.0 + (n - 0.75) * 0.6) * ${TUBE_RADIUS};
   rad *= 1.0 + 0.22 * sin(2.0 * a + zAbs * 0.05 + uDrift * 0.1 + hole);
 
   // Near rings listen to the spectrum (mirrored so there's no seam at a = 0).
   float near = 1.0 - slot / RINGS;
   float s = texture(uAudio, vec2(abs(fract(a / TAU + 0.25) * 2.0 - 1.0) * 0.75 + 0.02, 0.25)).r;
-  rad *= 1.0 + s * 0.3 * near * near;
+  rad *= 1.0 + s * 0.25 * near * near;
   rad += sin(a * 46.0 + zAbs * 3.0 + uTime * 2.5) * 0.012 * (0.2 + uHigh * 1.5) * near;
 
   // Look along our own hole: subtract the camera position and heading,
@@ -122,8 +111,9 @@ void main() {
   float bright = (0.3 + s * 1.1 + uSlowEnergy * 0.35) * fog * fadeIn;
   // A flash that rolls down the tunnel on each beat.
   bright += uBeat * exp(-pow((1.0 - uBeat) * RINGS - slot, 2.0) / 30.0) * 1.6;
-  // Where the holes merge they overlap; draw the chamber once instead of three times.
-  if (rings && hole != uCamHole) bright *= smoothstep(0.05, 0.35, split) * 0.55;
+  // Our tube (and the one we're crossing into) in full, the neighbours dimmer.
+  float own = hole == uCamHole ? 1.0 - uSwitch : hole == uNextHole ? uSwitch : 0.0;
+  if (rings) bright *= mix(0.4, 1.0, own);
   if (!rings) bright *= 0.1 * smoothstep(0.0, 0.5, near);
   vColor = col * bright;
 }`;
@@ -151,6 +141,11 @@ export class TunnelScene implements Scene {
   private lines!: Program;
   private bg!: Program;
   private travel = 0;
+  private hole = 0;
+  private nextHole = 0;
+  private switchStart = -100;
+  private lastSwitch = 0;
+  private beatsSinceSwitch = 0;
 
   init(r: Renderer) {
     this.lines = r.program(VS, LINE_FS);
@@ -164,6 +159,28 @@ export class TunnelScene implements Scene {
     const z = this.travel;
     const roll = frame.drift * 0.06 + Math.sin(frame.drift * 0.13) * 0.5;
 
+    // Switch tubes on a beat: at least 8 beats apart, then a 1-in-3 chance on each one,
+    // and never more than 24 beats (or ~8 s without beats) in the same tube.
+    let sw = Math.min(1, (frame.time - this.switchStart) / SWITCH_SECONDS);
+    if (sw >= 1 && this.hole !== this.nextHole) this.hole = this.nextHole;
+    if (f.onBeat) this.beatsSinceSwitch++;
+    const idle = sw >= 1 && this.hole === this.nextHole;
+    const onCue = f.onBeat && this.beatsSinceSwitch >= 8 && (Math.random() < 0.33 || this.beatsSinceSwitch >= 24);
+    const quiet = frame.time - this.lastSwitch > 8 && this.beatsSinceSwitch < 2;
+    if (idle && (onCue || quiet)) {
+      this.nextHole = (this.hole + 1 + Math.floor(Math.random() * (HOLES - 1))) % HOLES;
+      this.switchStart = frame.time;
+      this.lastSwitch = frame.time;
+      this.beatsSinceSwitch = 0;
+      sw = 0;
+    }
+    const e = sw * sw * (3 - 2 * sw);
+    const cameraAt = (zz: number): [number, number] => {
+      const a = holeAt(this.hole, zz);
+      const b = holeAt(this.nextHole, zz);
+      return [a[0] + (b[0] - a[0]) * e, a[1] + (b[1] - a[1]) * e];
+    };
+
     const cam = cameraAt(z);
     const ahead = cameraAt(z + 1);
     const behind = cameraAt(z - 1);
@@ -171,7 +188,7 @@ export class TunnelScene implements Scene {
 
     // Where the far end of our hole lands on screen, for the glow behind it.
     const zView = RINGS * SPACING;
-    const far = holeAt(holeFor(z), z + zView);
+    const far = cameraAt(z + zView);
     let ex = far[0] - cam[0] - heading[0] * zView;
     let ey = far[1] - cam[1] - heading[1] * zView;
     // Same rotation as GLSL's rot(): mat2(c, -s, s, c) is column-major.
@@ -190,7 +207,9 @@ export class TunnelScene implements Scene {
       .f('uRoll', roll)
       .f('uCam', cam[0], cam[1])
       .f('uHeading', heading[0], heading[1])
-      .f('uCamHole', holeFor(z));
+      .f('uCamHole', this.hole)
+      .f('uNextHole', this.nextHole)
+      .f('uSwitch', this.hole === this.nextHole ? 0 : e);
     p.f('uMode', 0);
     gl.drawArraysInstanced(gl.LINE_STRIP, 0, SEGMENTS + 1, RINGS * HOLES);
     p.f('uMode', 1);

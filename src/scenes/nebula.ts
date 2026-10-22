@@ -24,7 +24,7 @@ float gas(vec2 p, float t) {
 
 void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
-  float t = uDrift * 0.05;
+  float t = uDrift * 0.09;
   vec2 drift = vec2(t * 0.9, t * 0.35);
 
   vec3 col = BG * 0.2;
@@ -41,14 +41,17 @@ void main() {
   // Big, slow masks decide where the clouds are, leaving real empty space between them.
   float m1 = smoothstep(0.3, 0.62, fbm(uv * 0.55 + drift * 0.25 + 5.0, 3));
   float m2 = smoothstep(0.32, 0.65, fbm(uv * 0.8 - drift * 0.2 + 19.0, 3));
-  vec3 neb = SECONDARY * g1 * m1 * 1.1;
-  neb += PRIMARY * g2 * m2 * (0.9 + uSlowEnergy * 0.7);
-  neb += ACCENT * g3 * g2 * m1 * (0.8 + uMid * 0.9);
+  // Each layer answers to a different part of the music, so the nebula reshapes itself
+  // through a song: lows light the far gas, mids the clouds, highs the bright filaments.
+  vec3 m = uMedBands;
+  vec3 neb = SECONDARY * g1 * m1 * (0.5 + m.x * 1.3);
+  neb += PRIMARY * g2 * m2 * (0.45 + m.y * 1.4);
+  neb += ACCENT * g3 * g2 * m1 * (0.3 + m.z * 2.0);
 
   // A bright core that swells with the bass.
   vec2 corePos = vec2(sin(t * 0.8), cos(t * 0.6)) * 0.15;
   float core = exp(-length(uv - corePos) * (3.2 - uSlowBass * 1.2));
-  neb += mix(PRIMARY, HIGHLIGHT, 0.5) * core * (0.2 + uBass * 0.6 + uBeat * 0.25) * (0.3 + g2 * m2);
+  neb += mix(PRIMARY, HIGHLIGHT, 0.5) * core * (0.12 + m.x * 0.3) * (0.3 + g2 * m2);
 
   // Dust lanes eat the light in front.
   float dust = smoothstep(0.45, 0.85, fbm(uv * 2.2 - drift * 1.6 + 41.0, 5));
@@ -56,7 +59,7 @@ void main() {
   col *= 1.0 - dust * 0.6;
 
   // Gas glows: push it into HDR so the bloom picks it up.
-  col += neb * (1.8 + uEnergy * 0.7);
+  col += neb * (1.5 + uSlowEnergy * 0.6);
   fragColor = vec4(col, 1.0);
 }`;
 

@@ -15,7 +15,8 @@ uniform vec3 uDropColor[${MAX_DROPS}];
 // Stream function; its curl is a velocity field without sources or sinks, so the ink
 // swirls and folds instead of piling up or thinning out.
 float stream(vec2 p, float t) {
-  return fbm(p * 1.3 + vec2(t * 0.11, -t * 0.07), 3) + 0.5 * fbm(p * 3.1 - vec2(t * 0.05, t * 0.13), 2);
+  // A large swirl plus a finer one: the fine layer stretches the ink into thin filaments.
+  return fbm(p * 1.4 + vec2(t * 0.16, -t * 0.1), 3) + 0.55 * fbm(p * 4.0 - vec2(t * 0.09, t * 0.2), 2);
 }
 
 vec2 velocity(vec2 p, float t) {
@@ -32,13 +33,14 @@ void main() {
   if (uInit > 0.5) {
     col = BG;
   } else {
-    float speed = 0.05 + uSlowEnergy * 0.09 + uSlowBass * 0.04;
+    // Each beat gives the water a push.
+    float speed = 0.11 + uSlowEnergy * 0.16 + uMedBands.x * 0.06 + uBeat * 0.12;
     vec2 v = velocity(p, uDrift);
     // Semi-Lagrangian step: fetch the dye from where this pixel's water came from.
     vec2 back = vUv - vec2(v.x / aspect, v.y) * speed * uDt;
     col = texture(uPrev, back).rgb;
     // Old ink slowly settles back into the background.
-    col = mix(col, BG, 1.0 - pow(0.9965, uDt * 60.0));
+    col = mix(col, BG, 1.0 - pow(0.993, uDt * 60.0));
   }
   for (int i = 0; i < ${MAX_DROPS}; i++) {
     vec4 d = uDrops[i];
@@ -101,8 +103,8 @@ export class FluidScene implements Scene {
     this.queue.push({
       x: 0.12 + Math.random() * 0.76,
       y: 0.12 + Math.random() * 0.76,
-      radius: big ? 0.07 + frame.features.bass * 0.08 : 0.035 + Math.random() * 0.03,
-      strength: big ? 0.95 : 0.7,
+      radius: big ? 0.045 + frame.features.bass * 0.05 : 0.02 + Math.random() * 0.02,
+      strength: big ? 1 : 0.85,
       color: [p[role * 3] * boost, p[role * 3 + 1] * boost, p[role * 3 + 2] * boost],
     });
   }
@@ -123,7 +125,7 @@ export class FluidScene implements Scene {
     if (this.needsInit) for (let i = 0; i < 4; i++) this.drop(frame, true);
     if (f.onBeat) this.drop(frame, true);
     // Gentle drips keep things alive in quiet passages.
-    if (frame.time - this.lastDrip > 1.1 - frame.slowEnergy * 0.6) {
+    if (frame.time - this.lastDrip > 0.55 - frame.slowEnergy * 0.3) {
       this.lastDrip = frame.time;
       this.drop(frame, false);
     }

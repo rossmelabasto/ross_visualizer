@@ -23,6 +23,7 @@ uniform float uFlow;      // time that runs faster when the music is louder
 uniform float uDrift;     // like uFlow but follows a slow (~1.5 s) average, for calm motion
 uniform float uSlowBass;
 uniform float uSlowEnergy;
+uniform vec3 uMedBands;   // bass, mid, high smoothed over ~0.4 s: musical but not jumpy
 uniform float uBass;
 uniform float uLowMid;
 uniform float uMid;

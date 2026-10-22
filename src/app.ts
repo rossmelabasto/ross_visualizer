@@ -18,7 +18,7 @@ import { icons } from './ui/icons';
 
 const SCENE_IDS = ['fluid', 'nebula', 'galaxy', 'aurora', 'kaleido', 'tunnel', 'ascii'] as const;
 type SceneId = (typeof SCENE_IDS)[number];
-const BLOOM: Record<SceneId, number> = { fluid: 0.3, nebula: 0.65, galaxy: 0.9, aurora: 0.75, kaleido: 0.5, tunnel: 1.0, ascii: 0.3 };
+const BLOOM: Record<SceneId, number> = { fluid: 0.3, nebula: 0.5, galaxy: 0.9, aurora: 0.75, kaleido: 0.5, tunnel: 1.0, ascii: 0.3 };
 const TRANSITION = 0.9;
 const IDLE_AFTER = 3500;
 
@@ -58,6 +58,7 @@ export class App {
   private drift = 0;
   private slowBass = 0;
   private slowEnergy = 0;
+  private medBands: [number, number, number] = [0, 0, 0];
   private last = performance.now() / 1000;
   private frameEma = 1 / 60;
   private lastAdapt = 0;
@@ -179,6 +180,10 @@ export class App {
     this.slowBass += (f.bass - this.slowBass) * k;
     this.slowEnergy += (f.energy - this.slowEnergy) * k;
     this.drift += dt * (0.4 + this.slowEnergy * 1.3);
+    const km = 1 - Math.exp(-dt / 0.4);
+    this.medBands[0] += (f.bass - this.medBands[0]) * km;
+    this.medBands[1] += ((f.lowMid + f.mid) / 2 - this.medBands[1]) * km;
+    this.medBands[2] += (f.high - this.medBands[2]) * km;
 
     if (this.paletteMode === 'audio') {
       this.hue += dt * (0.02 + f.energy * 0.05) + (f.centroid - 0.5) * dt * 0.08;
@@ -205,6 +210,7 @@ export class App {
       drift: this.drift,
       slowBass: this.slowBass,
       slowEnergy: this.slowEnergy,
+      medBands: this.medBands,
       features: f,
       palette: paletteToLinearRgb(this.palette),
       brightness: this.brightness,
