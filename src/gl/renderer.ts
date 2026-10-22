@@ -13,6 +13,10 @@ export interface FrameState {
   time: number;
   dt: number;
   flow: number;
+  /** Smooth clock driven by the slow energy average. */
+  drift: number;
+  slowBass: number;
+  slowEnergy: number;
   features: AudioFeatures;
   palette: Float32Array;
   /** 0..1, how bright the current artwork is (scenes may tone down for pale covers). */
@@ -242,6 +246,9 @@ export class Renderer {
     p.f('uRes', w, h)
       .f('uTime', frame.time)
       .f('uFlow', frame.flow)
+      .f('uDrift', frame.drift)
+      .f('uSlowBass', frame.slowBass)
+      .f('uSlowEnergy', frame.slowEnergy)
       .f('uBass', f.bass)
       .f('uLowMid', f.lowMid)
       .f('uMid', f.mid)

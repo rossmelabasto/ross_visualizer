@@ -10,7 +10,7 @@
 
 - **Buscas cualquier canción** y suena su vista previa de 30 s (API de búsqueda de iTunes, sin iniciar sesión), mientras las escenas toman la paleta de su portada.
 - **O escucha tu propio audio**: el micrófono, el audio de tu PC (en Chrome/Edge, compartiendo pantalla con "Compartir audio"), un archivo local (lee la portada incrustada en las etiquetas MP3/FLAC) o una pista sintetizada que viene incluida.
-- **Cuatro escenas** con transición entre ellas: un fluido con *domain warping*, una galaxia de 120 mil partículas, un túnel caleidoscópico hecho con la portada y una terminal que dibuja el espectro en ASCII.
+- **Cinco escenas** con transición entre ellas: un fluido con *domain warping*, una galaxia de 120 mil partículas, un caleidoscopio hecho con la portada, un túnel de líneas que va doblando y una terminal que dibuja el espectro en ASCII.
 - Funciona en el celular: deslizas para cambiar de escena, se instala como PWA y no deja que la pantalla se apague.
 
 No se sube nada: todo el análisis de audio ocurre en tu navegador.
@@ -32,7 +32,7 @@ npm run build
 
 ## Teclas
 
-`1`–`4` escenas · `←`/`→` · `Espacio` reproducir/pausar · `F` pantalla completa · `H` ocultar la interfaz · `/` buscar
+`1`–`5` escenas · `←`/`→` · `Espacio` reproducir/pausar · `F` pantalla completa · `H` ocultar la interfaz · `/` buscar
 
 ## Lo que viene
 

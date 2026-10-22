@@ -14,7 +14,7 @@
 
 - **Search any song** and it plays the 30-second preview (iTunes Search API, no login) while the visuals take the palette of its cover.
 - **Or listen to your own audio**: the microphone, your computer's audio (Chrome/Edge screen-share with "Share audio"), a local file (it reads the embedded cover from MP3/FLAC tags), or a built-in synth track.
-- **Four scenes**, cross-faded: a domain-warped fluid, a 120k-particle galaxy, a kaleidoscope tunnel built from the artwork, and a terminal that renders the spectrum in ASCII.
+- **Five scenes**, cross-faded: a domain-warped fluid, a 120k-particle galaxy, a kaleidoscope built from the artwork, a bending tunnel of contour lines, and a terminal that renders the spectrum in ASCII.
 - Works on phones: swipe to change scene, installable as a PWA, keeps the screen awake.
 
 Nothing is uploaded: all the audio analysis happens in your browser.
@@ -49,7 +49,7 @@ npm run build
 
 ## Keys
 
-`1`–`4` scenes · `←`/`→` previous/next · `Space` play/pause · `F` fullscreen · `H` hide the interface · `/` search
+`1`–`5` scenes · `←`/`→` previous/next · `Space` play/pause · `F` fullscreen · `H` hide the interface · `/` search
 
 ## Roadmap
 

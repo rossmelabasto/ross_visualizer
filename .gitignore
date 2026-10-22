@@ -3,3 +3,4 @@ dist
 .deploy.env
 *.log
 .DS_Store
+shots

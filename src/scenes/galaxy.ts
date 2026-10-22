@@ -7,6 +7,8 @@ precision highp float;
 uniform vec2 uRes;
 uniform float uTime;
 uniform float uFlow;
+uniform float uDrift;
+uniform float uSlowBass;
 uniform float uBass;
 uniform float uHigh;
 uniform float uEnergy;
@@ -48,11 +50,12 @@ void main() {
     float r = pow(h2, 1.35) * 3.4 + 0.08;
     float tcol = clamp(r / 3.3, 0.0, 1.0);
     float s = texture(uAudio, vec2(tcol * 0.8 + 0.03, 0.25)).r;
-    r *= 1.0 + uBass * 0.16;
+    r *= 1.0 + uSlowBass * 0.1 + uBass * 0.05;
 
-    float omega = 0.6 / (0.3 + r);
-    float spread = (h3 - 0.5) * (1.1 / (r + 0.5));
-    float ang = arm / ARMS * TAU + r * 2.4 + uFlow * omega + spread;
+    // Rigid rotation plus a small, bounded wobble. (Real differential rotation winds the
+    // arms tighter forever, and after a few minutes they melted into one bright disc.)
+    float spread = (h3 - 0.5) * (0.9 / (r + 0.5));
+    float ang = arm / ARMS * TAU + r * 2.2 + spread + uDrift * 0.22 + 0.25 * sin(uDrift * 0.21 + r * 1.3);
     pos = vec3(cos(ang) * r, 0.0, sin(ang) * r);
     pos.xz += (vec2(h5, hash11(id * 4.71)) - 0.5) * 0.35 * (0.3 + r * 0.4);
     float g = (h4 + hash11(id * 2.3) + hash11(id * 5.9)) / 3.0 - 0.5; // ~gaussian
@@ -147,7 +150,7 @@ export class GalaxyScene implements Scene {
     this.flip = !this.flip;
 
     r.bindTarget(cur);
-    const decay = Math.pow(0.78 + f.energy * 0.12, frame.dt * 60);
+    const decay = Math.pow(0.72 + f.energy * 0.08, frame.dt * 60);
     r.common(this.fade.use(), frame, cur.w, cur.h).tex('uPrev', 1, prev.tex).f('uDecay', decay);
     r.drawFullscreen();
 

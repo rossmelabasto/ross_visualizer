@@ -9,13 +9,14 @@ import { AsciiScene } from './scenes/ascii';
 import { FluidScene } from './scenes/fluid';
 import { GalaxyScene } from './scenes/galaxy';
 import { KaleidoScene } from './scenes/kaleido';
+import { TunnelScene } from './scenes/tunnel';
 import { lookupSong, searchSongs, spotifySearchUrl, type Track } from './search/itunes';
 import { detectLang, safeGet, safeSet, strings, type Lang, type Strings } from './ui/i18n';
 import { icons } from './ui/icons';
 
-const SCENE_IDS = ['fluid', 'galaxy', 'kaleido', 'ascii'] as const;
+const SCENE_IDS = ['fluid', 'galaxy', 'kaleido', 'tunnel', 'ascii'] as const;
 type SceneId = (typeof SCENE_IDS)[number];
-const BLOOM: Record<SceneId, number> = { fluid: 0.35, galaxy: 0.9, kaleido: 0.5, ascii: 0.3 };
+const BLOOM: Record<SceneId, number> = { fluid: 0.35, galaxy: 0.9, kaleido: 0.5, tunnel: 1.0, ascii: 0.3 };
 const TRANSITION = 0.9;
 const IDLE_AFTER = 3500;
 
@@ -52,6 +53,9 @@ export class App {
 
   private readonly idle = emptyFeatures();
   private flow = 0;
+  private drift = 0;
+  private slowBass = 0;
+  private slowEnergy = 0;
   private last = performance.now() / 1000;
   private frameEma = 1 / 60;
   private lastAdapt = 0;
@@ -76,7 +80,7 @@ export class App {
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas);
     this.galaxy = new GalaxyScene();
-    this.scenes = [new FluidScene(), this.galaxy, new KaleidoScene(), new AsciiScene()];
+    this.scenes = [new FluidScene(), this.galaxy, new KaleidoScene(), new TunnelScene(), new AsciiScene()];
     this.scenes.forEach((s) => s.init(this.renderer));
     this.coverTex = this.renderer.createImageTexture();
     this.coverPrevTex = this.renderer.createImageTexture();
@@ -146,6 +150,11 @@ export class App {
     if (!f || f.silent) f = idleFeatures(this.idle, now);
 
     this.flow += dt * (0.35 + f.energy * 1.7 + f.beat * 0.35);
+    // Slow averages for scenes that should move calmly and only "breathe" with the music.
+    const k = 1 - Math.exp(-dt / 1.5);
+    this.slowBass += (f.bass - this.slowBass) * k;
+    this.slowEnergy += (f.energy - this.slowEnergy) * k;
+    this.drift += dt * (0.3 + this.slowEnergy * 0.8);
 
     if (this.paletteMode === 'audio') {
       this.hue += dt * (0.02 + f.energy * 0.05) + (f.centroid - 0.5) * dt * 0.08;
@@ -169,6 +178,9 @@ export class App {
       time: now,
       dt,
       flow: this.flow,
+      drift: this.drift,
+      slowBass: this.slowBass,
+      slowEnergy: this.slowEnergy,
       features: f,
       palette: paletteToLinearRgb(this.palette),
       brightness: this.brightness,
