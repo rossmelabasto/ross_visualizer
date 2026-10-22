@@ -76,6 +76,9 @@ export class App {
   private t: Strings = strings(this.lang);
   private toastTimer = 0;
   private statsOn = false;
+  private analysis: AudioFeatures | null = null;
+  private beatLatch = false;
+  private lastAnalysis = performance.now() / 1000;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas);
@@ -107,7 +110,18 @@ export class App {
     const shared = params.get('t');
     if (shared) this.loadShared(shared);
 
+    // Audio analysis runs on its own clock: when frames get slow (busy phone, battery saver,
+    // a window the compositor throttles) we still see every kick drum.
+    window.setInterval(() => this.analyze(), 1000 / 60);
     requestAnimationFrame((ts) => this.loop(ts));
+  }
+
+  private analyze() {
+    const now = performance.now() / 1000;
+    const dt = Math.min(0.1, Math.max(0.001, now - this.lastAnalysis));
+    this.lastAnalysis = now;
+    this.analysis = this.engine.paused ? null : this.engine.frame(dt, now);
+    if (this.analysis?.onBeat) this.beatLatch = true;
   }
 
   // ---------------------------------------------------------------- rendering
@@ -146,8 +160,13 @@ export class App {
     this.frameEma += (dt - this.frameEma) * 0.05;
     this.adaptQuality(now);
 
-    let f: AudioFeatures | null = this.engine.paused ? null : this.engine.frame(dt, now);
+    let f = this.engine.paused || this.engine.kind === 'none' ? null : this.analysis;
     if (!f || f.silent) f = idleFeatures(this.idle, now);
+    else {
+      // A beat found between two frames still has to reach the scenes exactly once.
+      f.onBeat = this.beatLatch;
+      this.beatLatch = false;
+    }
 
     this.flow += dt * (0.35 + f.energy * 1.7 + f.beat * 0.35);
     // Slow averages for scenes that should move calmly and only "breathe" with the music.
