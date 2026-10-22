@@ -145,9 +145,12 @@ export class App {
     this.lastAdapt = now;
     const dpr = window.devicePixelRatio || 1;
     const max = Math.min(dpr, matchMedia('(pointer: coarse)').matches ? 1.5 : 2);
+    // Under ~20 fps it's almost always the browser throttling a hidden or occluded window,
+    // not the GPU: lowering the resolution then would only make it look worse once visible.
+    if (this.frameEma > 1 / 20) return;
     let next = this.pixelScale;
     if (this.frameEma > 1 / 42) next = Math.max(0.5, next * 0.85);
-    else if (this.frameEma < 1 / 57 && next < max) next = Math.min(max, next * 1.06);
+    else if (this.frameEma < 1 / 57 && next < max) next = Math.min(max, next * 1.12);
     if (Math.abs(next - this.pixelScale) > 0.01) {
       this.pixelScale = next;
       this.onResize();
