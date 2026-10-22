@@ -9,14 +9,16 @@
 | ![Fluid scene](docs/screenshots/fluid.jpg) | ![Galaxy scene](docs/screenshots/galaxy.jpg) |
 | **Kaleidoscope** | **rOS** |
 | ![Kaleidoscope scene](docs/screenshots/kaleido.jpg) | ![rOS terminal scene](docs/screenshots/ascii.jpg) |
-| **Tunnel** | |
-| ![Tunnel scene](docs/screenshots/tunnel.jpg) | |
+| **Tunnel** | **Aurora** |
+| ![Tunnel scene](docs/screenshots/tunnel.jpg) | ![Aurora scene](docs/screenshots/aurora.jpg) |
+| **Nebula** | |
+| ![Nebula scene](docs/screenshots/nebula.jpg) | |
 
 ## What it does
 
 - **Search any song** and it plays the 30-second preview (iTunes Search API, no login) while the visuals take the palette of its cover.
 - **Or listen to your own audio**: the microphone, your computer's audio (Chrome/Edge screen-share with "Share audio"), a local file (it reads the embedded cover from MP3/FLAC tags), or a built-in synth track.
-- **Five scenes**, cross-faded: a domain-warped fluid, a 120k-particle galaxy, a kaleidoscope built from the artwork, a bending tunnel of contour lines, and a terminal that renders the spectrum in ASCII.
+- **Seven scenes**, cross-faded: ink drops swirling in water (a real advection simulation), a nebula of gas and dust, a 120k-particle galaxy that morphs between spiral, barred, ring and elliptical shapes, an aurora over a lake, a kaleidoscope built from the artwork, a Swiss-cheese tunnel of contour lines that splits into holes, and a terminal that renders the spectrum in ASCII.
 - Works on phones: swipe to change scene, installable as a PWA, keeps the screen awake.
 
 Nothing is uploaded: all the audio analysis happens in your browser.
@@ -51,7 +53,7 @@ npm run build
 
 ## Keys
 
-`1`–`5` scenes · `←`/`→` previous/next · `Space` play/pause · `F` fullscreen · `H` hide the interface · `/` search
+`1`–`7` scenes · `←`/`→` previous/next · `Space` play/pause · `F` fullscreen · `H` hide the interface · `/` search
 
 ## Roadmap
 

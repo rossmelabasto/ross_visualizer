@@ -18,7 +18,7 @@ const { values: opt, positionals } = parseArgs({
   },
 });
 const mode = positionals[0] ?? 'demo';
-const scenes = ['fluid', 'galaxy', 'kaleido', 'tunnel', 'ascii'];
+const scenes = ['fluid', 'nebula', 'galaxy', 'aurora', 'kaleido', 'tunnel', 'ascii'];
 mkdirSync(opt.out, { recursive: true });
 
 const browser = await chromium.launch({

@@ -8,15 +8,17 @@ import { Renderer, type FrameState, type Scene } from './gl/renderer';
 import { AsciiScene } from './scenes/ascii';
 import { FluidScene } from './scenes/fluid';
 import { GalaxyScene } from './scenes/galaxy';
+import { AuroraScene } from './scenes/aurora';
 import { KaleidoScene } from './scenes/kaleido';
+import { NebulaScene } from './scenes/nebula';
 import { TunnelScene } from './scenes/tunnel';
 import { lookupSong, searchSongs, spotifySearchUrl, type Track } from './search/itunes';
 import { detectLang, safeGet, safeSet, strings, type Lang, type Strings } from './ui/i18n';
 import { icons } from './ui/icons';
 
-const SCENE_IDS = ['fluid', 'galaxy', 'kaleido', 'tunnel', 'ascii'] as const;
+const SCENE_IDS = ['fluid', 'nebula', 'galaxy', 'aurora', 'kaleido', 'tunnel', 'ascii'] as const;
 type SceneId = (typeof SCENE_IDS)[number];
-const BLOOM: Record<SceneId, number> = { fluid: 0.35, galaxy: 0.9, kaleido: 0.5, tunnel: 1.0, ascii: 0.3 };
+const BLOOM: Record<SceneId, number> = { fluid: 0.3, nebula: 0.65, galaxy: 0.9, aurora: 0.75, kaleido: 0.5, tunnel: 1.0, ascii: 0.3 };
 const TRANSITION = 0.9;
 const IDLE_AFTER = 3500;
 
@@ -83,7 +85,7 @@ export class App {
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas);
     this.galaxy = new GalaxyScene();
-    this.scenes = [new FluidScene(), this.galaxy, new KaleidoScene(), new TunnelScene(), new AsciiScene()];
+    this.scenes = [new FluidScene(), new NebulaScene(), this.galaxy, new AuroraScene(), new KaleidoScene(), new TunnelScene(), new AsciiScene()];
     this.scenes.forEach((s) => s.init(this.renderer));
     this.coverTex = this.renderer.createImageTexture();
     this.coverPrevTex = this.renderer.createImageTexture();
@@ -173,7 +175,7 @@ export class App {
     const k = 1 - Math.exp(-dt / 1.5);
     this.slowBass += (f.bass - this.slowBass) * k;
     this.slowEnergy += (f.energy - this.slowEnergy) * k;
-    this.drift += dt * (0.3 + this.slowEnergy * 0.8);
+    this.drift += dt * (0.4 + this.slowEnergy * 1.3);
 
     if (this.paletteMode === 'audio') {
       this.hue += dt * (0.02 + f.energy * 0.05) + (f.centroid - 0.5) * dt * 0.08;

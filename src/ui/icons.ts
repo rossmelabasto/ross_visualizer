@@ -20,6 +20,8 @@ export const icons = {
   scene: {
     fluid: svg('<path d="M3 15c3-4 6 2 9-2s6 2 9-2"/><path d="M3 9c3-4 6 2 9-2s6 2 9-2"/>'),
     galaxy: svg('<circle cx="12" cy="12" r="1.5"/><path d="M12 4a8 8 0 0 1 8 8M12 20a8 8 0 0 1-8-8M17 7a6 6 0 0 0-10 2M7 17a6 6 0 0 0 10-2"/>'),
+    nebula: svg('<path d="M4 14c2-5 7-7 11-5s5 6 2 8-7 1-8-2 2-5 5-4"/><circle cx="6" cy="6" r=".8"/><circle cx="19" cy="5" r=".8"/><circle cx="20" cy="18" r=".8"/>'),
+    aurora: svg('<path d="M3 13c3-6 6 2 9-4s6 1 9-5"/><path d="M3 17c3-4 6 1 9-3s6 0 9-3" opacity=".6"/><path d="M2 21l5-4 4 3 4-5 7 6"/>'),
     kaleido: svg('<path d="M12 3l3 6h-6zM12 21l-3-6h6zM3 12l6-3v6zM21 12l-6 3V9z"/>'),
     tunnel: svg('<path d="M4 6c3-2 13-2 16 0M5 18c3 2 11 2 14 0M7 9c2-1 8-1 10 0M8 15c2 1 6 1 8 0"/><ellipse cx="12" cy="12" rx="2.5" ry="1.5"/>'),
     ascii: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M12 15h5"/>'),
