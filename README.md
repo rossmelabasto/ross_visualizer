@@ -9,6 +9,8 @@
 | ![Fluid scene](docs/screenshots/fluid.jpg) | ![Galaxy scene](docs/screenshots/galaxy.jpg) |
 | **Kaleidoscope** | **rOS** |
 | ![Kaleidoscope scene](docs/screenshots/kaleido.jpg) | ![rOS terminal scene](docs/screenshots/ascii.jpg) |
+| **Tunnel** | |
+| ![Tunnel scene](docs/screenshots/tunnel.jpg) | |
 
 ## What it does
 
@@ -53,7 +55,6 @@ npm run build
 
 ## Roadmap
 
-- Spotify sign-in to follow what you're playing automatically.
 - Desktop app (Tauri) with a click-through **overlay** mode and native system-audio capture.
 - Android app with an overlay mode, reading the system's media session.
 - More scenes.

@@ -36,7 +36,6 @@ npm run build
 
 ## Lo que viene
 
-- Iniciar sesión con Spotify para seguir lo que estás escuchando.
 - App de escritorio (Tauri) con modo **overlay** transparente y captura nativa del audio del sistema.
 - App de Android con modo overlay, leyendo la sesión multimedia del sistema.
 - Más escenas.
