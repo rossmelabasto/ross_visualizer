@@ -18,7 +18,7 @@
 
 - **Search any song** and it plays the 30-second preview (iTunes Search API, no login) while the visuals take the palette of its cover.
 - **Or listen to your own audio**: the microphone, your computer's audio (Chrome/Edge screen-share with "Share audio"), a local file (it reads the embedded cover from MP3/FLAC tags), or a built-in synth track.
-- **Seven scenes**, cross-faded: ink drops swirling in water (a real advection simulation), a nebula of gas and dust, a 120k-particle galaxy that morphs between spiral, barred, ring and elliptical shapes, an aurora over a lake, a kaleidoscope built from the artwork, a Swiss-cheese tunnel: six separate tubes of contour lines, and the camera cuts through the walls from one to another on the beat, and a terminal that renders the spectrum in ASCII.
+- **Seven scenes**, cross-faded: ink poured into water by the music (a real Navier–Stokes fluid solver: each band sprays its own color, beats fire bursts), a volumetric nebula of glowing gas and dark dust, a 120k-particle galaxy that morphs between spiral, barred, ring and elliptical shapes, a volumetric aurora seen from the shore of a lake, a kaleidoscope built from the artwork, a tunnel of contour lines with three versions to pick from (`V`), and a terminal that renders the spectrum in ASCII.
 - Works on phones: swipe to change scene, installable as a PWA, keeps the screen awake.
 
 Nothing is uploaded: all the audio analysis happens in your browser.
@@ -38,7 +38,7 @@ album art ──► 64×64 pixels ──► k-means in OKLab ──► 5-role pa
 
 **Palette** (`src/color/palette.ts`): the cover is reduced to 64×64, clustered with deterministic k-means++ in **OKLab** (a perceptual color space), and the clusters are scored by size, chroma and lightness to fill five roles: background, primary, secondary, accent and highlight. Muted covers keep their hue; black-and-white covers get the brand lime as accent. Palettes interpolate in OKLab, so song changes fade instead of jumping.
 
-**Rendering** (`src/gl/`): WebGL2 with half-float targets when available, a quarter-resolution bloom, ACES tonemapping and an adaptive resolution that keeps the frame rate up on phones. The galaxy has no simulation state: each particle's position is a function of its index and time, computed in the vertex shader. Shaders are GLSL ES 3.00 so they can be reused on OpenGL ES (Android).
+**Rendering** (`src/gl/`): WebGL2 with half-float targets when available, a quarter-resolution bloom, ACES tonemapping and an adaptive resolution that keeps the frame rate up on phones. The nebula and the aurora are ray-marched volumes; their 3D noise comes from a small random texture (two z-slices per fetch) so they stay at 60 fps. The galaxy has no simulation state: each particle's position is a function of its index and time, computed in the vertex shader. Shaders are GLSL ES 3.00 so they can be reused on OpenGL ES (Android).
 
 ## Run it
 
@@ -53,7 +53,7 @@ npm run build
 
 ## Keys
 
-`1`–`7` scenes · `←`/`→` previous/next · `Space` play/pause · `F` fullscreen · `H` hide the interface · `/` search
+`1`–`7` scenes · `←`/`→` previous/next · `Space` play/pause · `F` fullscreen · `H` hide the interface · `V` tunnel version · `/` search
 
 ## Roadmap
 
@@ -63,6 +63,6 @@ npm run build
 
 ## Credits
 
-Previews and artwork from the [iTunes Search API](https://performance-partners.apple.com/search-api). Font: [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (OFL). OKLab by [Björn Ottosson](https://bottosson.github.io/posts/oklab/); domain warping after [Inigo Quilez](https://iquilezles.org/articles/warp/).
+Previews and artwork from the [iTunes Search API](https://performance-partners.apple.com/search-api). Font: [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (OFL). OKLab by [Björn Ottosson](https://bottosson.github.io/posts/oklab/); domain warping and texture-based 3D noise after [Inigo Quilez](https://iquilezles.org/articles/warp/). The fluid solver is adapted from Pavel Dobryakov's [WebGL Fluid Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT), itself based on *Fast Fluid Dynamics Simulation on the GPU* (GPU Gems). The aurora's look follows the physics notes in Toni Sagristà's [Rendering volume aurorae and nebulae](https://tonisagrista.com/blog/2024/rendering-aurorae-nebulae/).
 
 Made by [Rossmel Abasto](https://portfolio.rossmel.com) · MIT License

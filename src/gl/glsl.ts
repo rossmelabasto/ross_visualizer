@@ -36,6 +36,7 @@ uniform float uFlux;
 uniform float uBpm;
 uniform vec3 uPal[5];     // bg, primary, secondary, accent, highlight (linear RGB)
 uniform sampler2D uAudio; // row 0: log spectrum, row 1: waveform
+uniform sampler2D uNoise; // 256² random, see noise3()
 
 #define PI 3.14159265359
 #define TAU 6.28318530718
@@ -65,6 +66,26 @@ float fbm(vec2 p, int octaves) {
     if (i >= octaves) break;
     s += a * vnoise(p);
     p = r * p * 2.03 + 17.1;
+    a *= 0.5;
+  }
+  return s;
+}
+
+// Fast value noise from the noise texture: one fetch in 2D, one fetch for two z-slices in 3D.
+float tnoise(vec2 p) { return textureLod(uNoise, (p + 0.5) / 256.0, 0.0).x; }
+float noise3(vec3 x) {
+  vec3 i = floor(x), f = fract(x);
+  f = f * f * (3.0 - 2.0 * f);
+  vec2 uv = (i.xy + vec2(37.0, 17.0) * i.z) + f.xy;
+  vec2 rg = textureLod(uNoise, (uv + 0.5) / 256.0, 0.0).yx;
+  return mix(rg.x, rg.y, f.z);
+}
+float fbm3(vec3 p, int octaves) {
+  float s = 0.0, a = 0.5;
+  for (int i = 0; i < 6; i++) {
+    if (i >= octaves) break;
+    s += a * noise3(p);
+    p = p * 2.02 + vec3(13.1, 7.7, 3.3);
     a *= 0.5;
   }
   return s;

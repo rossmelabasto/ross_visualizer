@@ -1,5 +1,7 @@
 // Screenshot every scene in a headless browser (software WebGL, so no GPU needed).
 //   node scripts/shots.mjs [demo|search] [--out dir] [--base url] [--q "query"] [--mobile] [--high] [--wait 9]
+//                          [--only fluid,aurora] [--frames 3]
+// The tunnel is shot once per version.
 // Uses the system Chromium; set CHROMIUM to point elsewhere.
 import { mkdirSync } from 'node:fs';
 import { parseArgs } from 'node:util';
@@ -15,6 +17,10 @@ const { values: opt, positionals } = parseArgs({
     high: { type: 'boolean', default: false },
     stats: { type: 'boolean', default: true },
     wait: { type: 'string', default: '9' },
+    only: { type: 'string', default: '' },
+    frames: { type: 'string', default: '1' },
+    gpu: { type: 'boolean', default: false },
+    clean: { type: 'boolean', default: false }, // hide the interface (for README screenshots)
   },
 });
 const mode = positionals[0] ?? 'demo';
@@ -23,7 +29,11 @@ mkdirSync(opt.out, { recursive: true });
 
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM ?? '/usr/bin/chromium',
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'],
+  // --gpu uses the real graphics card (for frame rates); the default works without one.
+  args: [
+    ...(opt.gpu ? ['--enable-gpu', '--ignore-gpu-blocklist', '--use-angle=gl'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']),
+    '--autoplay-policy=no-user-gesture-required',
+  ],
 });
 const page = await browser.newPage({
   viewport: opt.mobile ? { width: 390, height: 844 } : { width: 1280, height: 800 },
@@ -49,7 +59,7 @@ if (mode === 'demo') {
   await page.screenshot({ path: `${opt.out}/${mode}-1-results.png` });
   await page.click('.results button');
 }
-if (opt.stats) {
+if (opt.stats && !opt.clean) {
   await page.evaluate(() => {
     const s = document.getElementById('stats-toggle');
     s.checked = true;
@@ -57,11 +67,25 @@ if (opt.stats) {
   });
 }
 await page.waitForTimeout(Number(opt.wait) * 1000);
+const only = opt.only ? opt.only.split(',') : scenes;
 for (const [i, name] of scenes.entries()) {
+  if (!only.includes(name)) continue;
   await page.keyboard.press(String(i + 1));
-  if (!opt.mobile) await page.mouse.move(10 + i, 10);
-  await page.waitForTimeout(2500);
-  await page.screenshot({ path: `${opt.out}/${mode}-${i + 2}-${name}.png` });
+  const versions = name === 'tunnel' ? 3 : 1;
+  for (let v = 0; v < versions; v++) {
+    if (v > 0) await page.keyboard.press('v');
+    for (let k = 0; k < Number(opt.frames); k++) {
+      if (!opt.mobile && !opt.clean) await page.mouse.move(10 + i + k, 10);
+      await page.waitForTimeout(2500);
+      if (opt.clean) {
+        await page.evaluate(() => document.body.classList.add('idle'));
+        await page.waitForTimeout(800);
+      }
+      const tag = `${versions > 1 ? `-v${v + 1}` : ''}${Number(opt.frames) > 1 ? `-${k}` : ''}`;
+      await page.screenshot({ path: `${opt.out}/${mode}-${i + 2}-${name}${tag}.png` });
+      if (opt.gpu) console.log(name + tag, (await page.locator('#stats').textContent()).match(/fps.*/)?.[0]);
+    }
+  }
 }
 console.log(await page.locator('#stats').textContent());
 console.log(logs.join('\n') || 'no console errors');

@@ -1,5 +1,6 @@
-import type { FrameState, Program, Renderer, Scene, Target } from '../gl/renderer';
+import type { FrameState, Program, Renderer, Scene, Target } from '../../gl/renderer';
 
+// Version 3 ("paths"): six parallel tubes, the camera jumps between them on the beat.
 // Flying through Swiss cheese made of contour lines: six separate tubes bend along together
 // without ever touching, and on the beat the camera cuts through the wall into another one.
 // Rings and lengthwise "spokes" come from the same function, so they form one mesh.
@@ -135,8 +136,8 @@ void main() {
   fragColor = vec4(c, 1.0);
 }`;
 
-export class TunnelScene implements Scene {
-  readonly id = 'tunnel';
+export class TunnelPaths implements Scene {
+  readonly id = 'tunnel-paths';
   readonly scale = 1;
   private lines!: Program;
   private bg!: Program;

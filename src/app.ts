@@ -11,7 +11,7 @@ import { GalaxyScene } from './scenes/galaxy';
 import { AuroraScene } from './scenes/aurora';
 import { KaleidoScene } from './scenes/kaleido';
 import { NebulaScene } from './scenes/nebula';
-import { TunnelScene } from './scenes/tunnel';
+import { TUNNEL_VERSIONS, TunnelScene } from './scenes/tunnel';
 import { lookupSong, searchSongs, spotifySearchUrl, type Track } from './search/itunes';
 import { detectLang, safeGet, safeSet, strings, type Lang, type Strings } from './ui/i18n';
 import { icons } from './ui/icons';
@@ -38,6 +38,7 @@ export class App {
   private readonly renderer: Renderer;
   private readonly scenes: Scene[];
   private readonly galaxy: GalaxyScene;
+  private readonly tunnel: TunnelScene;
   private sceneIndex = 0;
   private prevScene: Scene | null = null;
   private transitionStart = 0;
@@ -86,7 +87,8 @@ export class App {
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas);
     this.galaxy = new GalaxyScene();
-    this.scenes = [new FluidScene(), new NebulaScene(), this.galaxy, new AuroraScene(), new KaleidoScene(), new TunnelScene(), new AsciiScene()];
+    this.tunnel = new TunnelScene();
+    this.scenes = [new FluidScene(), new NebulaScene(), this.galaxy, new AuroraScene(), new KaleidoScene(), this.tunnel, new AsciiScene()];
     this.scenes.forEach((s) => s.init(this.renderer));
     this.coverTex = this.renderer.createImageTexture();
     this.coverPrevTex = this.renderer.createImageTexture();
@@ -101,6 +103,8 @@ export class App {
     const params = new URLSearchParams(location.search);
     const startScene = SCENE_IDS.indexOf((params.get('scene') ?? safeGet('rv_scene') ?? '') as SceneId);
     this.sceneIndex = startScene >= 0 ? startScene : 0;
+    const tv = TUNNEL_VERSIONS.indexOf((params.get('tunnel') ?? safeGet('rv_tunnel') ?? '') as (typeof TUNNEL_VERSIONS)[number]);
+    if (tv >= 0) this.tunnel.version = tv;
 
     this.resetPixelScale();
     this.onResize();
@@ -268,6 +272,29 @@ export class App {
     this.sceneIndex = i;
     safeSet('rv_scene', SCENE_IDS[i]);
     document.querySelectorAll<HTMLButtonElement>('.scene-btn').forEach((b, k) => b.setAttribute('aria-selected', String(k === i)));
+    this.renderVariants();
+  }
+
+  private setTunnelVersion(v: number) {
+    const n = TUNNEL_VERSIONS.length;
+    this.tunnel.version = ((v % n) + n) % n;
+    safeSet('rv_tunnel', TUNNEL_VERSIONS[this.tunnel.version]);
+    this.renderVariants();
+  }
+
+  /** The tunnel's version picker, shown only while the tunnel is on screen. */
+  private renderVariants() {
+    const box = $('variants');
+    box.hidden = this.scenes[this.sceneIndex] !== this.tunnel;
+    if (box.hidden) return;
+    box.innerHTML = `<span>${this.t.tunnelVersion}</span>`;
+    TUNNEL_VERSIONS.forEach((v, i) => {
+      const b = document.createElement('button');
+      b.textContent = `${i + 1} · ${this.t.tunnelVersions[v]}`;
+      b.classList.toggle('on', i === this.tunnel.version);
+      b.addEventListener('click', () => this.setTunnelVersion(i));
+      box.appendChild(b);
+    });
   }
 
   // ---------------------------------------------------------------- color
@@ -486,6 +513,7 @@ export class App {
     tip('settings-close', t.close);
     tip('start-close', t.close);
     this.renderSceneButtons();
+    this.renderVariants();
     this.updateSearchHint();
     this.updateDock();
     this.renderNowLinks();
@@ -676,6 +704,7 @@ export class App {
   private async share() {
     const url = new URL(location.origin + location.pathname);
     url.searchParams.set('scene', SCENE_IDS[this.sceneIndex]);
+    if (this.scenes[this.sceneIndex] === this.tunnel) url.searchParams.set('tunnel', TUNNEL_VERSIONS[this.tunnel.version]);
     const id = this.track?.id ?? this.now?.track?.id;
     if (id) url.searchParams.set('t', id);
     try {
@@ -779,6 +808,7 @@ export class App {
       else if (e.key === 'ArrowLeft') this.setScene(this.sceneIndex - 1);
       else if (e.key === 'f' || e.key === 'F') this.toggleFullscreen();
       else if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('idle');
+      else if ((e.key === 'v' || e.key === 'V') && this.scenes[this.sceneIndex] === this.tunnel) this.setTunnelVersion(this.tunnel.version + 1);
       else if (e.key === ' ') {
         e.preventDefault();
         this.engine.toggleMedia().then(() => this.updateDock());

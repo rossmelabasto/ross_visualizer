@@ -110,6 +110,7 @@ export class Renderer {
   private bright: Program;
   private blur: Program;
   private blackTex: WebGLTexture;
+  private noiseTex: WebGLTexture;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl2', {
@@ -122,11 +123,12 @@ export class Renderer {
     });
     if (!gl) throw new Error('webgl2');
     this.gl = gl;
-    this.hdr = !!gl.getExtension('EXT_color_buffer_float');
+    this.hdr = !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
     gl.getExtension('OES_texture_float_linear');
     this.emptyVao = gl.createVertexArray()!;
     this.audioTex = this.createDataTexture(256, 2);
     this.blackTex = this.createDataTexture(1, 1);
+    this.noiseTex = this.createNoiseTexture();
     this.post = this.program(FULLSCREEN_VS, POST_FS);
     this.bright = this.program(FULLSCREEN_VS, BRIGHT_FS);
     this.blur = this.program(FULLSCREEN_VS, BLUR_FS);
@@ -141,6 +143,33 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+  }
+
+  /**
+   * 256² tiling random texture for the prelude's noise3(): G holds R shifted by (37, 17), so one
+   * bilinear fetch gives two z-slices of value noise (the trick from Inigo Quilez's cloud shaders).
+   */
+  private createNoiseTexture() {
+    const gl = this.gl;
+    const n = 256;
+    let seed = 1;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 255;
+    const r = new Uint8Array(n * n).map(rnd);
+    const d = new Uint8Array(n * n * 2);
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        d[(y * n + x) * 2] = r[y * n + x];
+        d[(y * n + x) * 2 + 1] = r[((y - 17) & 255) * n + ((x - 37) & 255)];
+      }
+    }
+    const tex = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG8, n, n, 0, gl.RG, gl.UNSIGNED_BYTE, d);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     return tex;
   }
 
@@ -242,7 +271,7 @@ export class Renderer {
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 256, 2, gl.RED, gl.UNSIGNED_BYTE, d);
   }
 
-  /** Set the uniforms declared in the prelude. Texture unit 0 is reserved for audio. */
+  /** Set the uniforms declared in the prelude. Texture units 0 (audio) and 7 (noise) are reserved. */
   common(p: Program, frame: FrameState, w: number, h: number) {
     const f = frame.features;
     p.f('uRes', w, h)
@@ -263,6 +292,7 @@ export class Renderer {
       .f('uFlux', f.flux)
       .f('uBpm', f.bpm)
       .v3('uPal[0]', frame.palette)
+      .tex('uNoise', 7, this.noiseTex)
       .tex('uAudio', 0, this.audioTex);
     return p;
   }
