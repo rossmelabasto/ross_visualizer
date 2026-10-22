@@ -4,8 +4,9 @@ import type { FrameState, Program, Renderer, Scene, Target } from '../gl/rendere
 // → advection), adapted from Pavel Dobryakov's WebGL-Fluid-Simulation (MIT), which follows
 // "Fast Fluid Dynamics Simulation on the GPU" from GPU Gems.
 //
-// The music pours ink in: three nozzles drift around the screen, one per band (bass, mids,
-// highs), each spraying its palette color as hard as its band plays. Beats fire bursts.
+// The music pours ink in: three nozzles drift slowly around the screen, one per band (bass,
+// mids, highs), each trickling its palette color as much as its band plays. The motion comes
+// from the beats: each one fires a burst and kicks the bass nozzle, then the water settles.
 // Velocity is in simulation texels per second; the dye lives on a finer grid than the velocity.
 
 const MAX_SPLATS = 8;
@@ -13,7 +14,9 @@ const SIM_SIZE = 128; // shorter side of the velocity grid
 const DYE_SIZE = 720; // shorter side of the dye grid
 const PRESSURE_ITERATIONS = 20;
 const PRESSURE_DECAY = 0.8;
-const VELOCITY_DISSIPATION = 0.25;
+// High enough that the water settles between beats (about half the speed is gone after
+// 0.3 s), so each kick reads as a push instead of the whole tank churning nonstop.
+const VELOCITY_DISSIPATION = 2.6;
 
 /** Fullscreen pass with the left/right/top/bottom neighbours precomputed. */
 const NEIGHBOURS_VS = /* glsl */ `#version 300 es
@@ -237,11 +240,11 @@ export class FluidScene implements Scene {
   private queueMusic(frame: FrameState) {
     const f = frame.features;
     const [bass, mid, high] = frame.medBands;
-    const t = frame.drift * 0.35;
+    const t = frame.drift * 0.15;
     const dt = Math.min(frame.dt, 1 / 30);
 
-    // Three nozzles wander on slow Lissajous paths and spray along their direction of travel,
-    // each one as hard as its band is playing.
+    // Three nozzles wander on slow Lissajous paths and pour along their direction of travel,
+    // each one as much as its band is playing. They only nudge the water; beats move it.
     const nozzles: { role: number; level: number; phase: number; speed: number }[] = [
       { role: 1, level: bass, phase: 0, speed: 1 },
       { role: 2, level: mid, phase: 2.1, speed: 1.3 },
@@ -259,7 +262,8 @@ export class FluidScene implements Scene {
       dy /= len;
       // A trickle even in silence, so the water never goes still.
       const level = 0.08 + n.level * 0.92;
-      const force = 140 + level * 520;
+      const kick = f.onBeat && n.role === 1 ? 500 + f.bass * 900 : 0;
+      const force = 25 + level * 70 + kick;
       const ink = level * dt * 6;
       const c = this.color(frame, n.role, 1);
       this.splats.push({ x, y, dx: dx * force, dy: dy * force, color: [c[0] * ink, c[1] * ink, c[2] * ink], radius: 0.0012 + level * 0.0015 });
@@ -271,7 +275,7 @@ export class FluidScene implements Scene {
       const x = 0.15 + Math.random() * 0.7;
       const y = 0.15 + Math.random() * 0.7;
       const ang = Math.random() * Math.PI * 2;
-      const force = 900 + f.bass * 1800;
+      const force = 600 + f.bass * 1000;
       const ink = 0.55 + f.bass * 0.5;
       const c = this.color(frame, role, role === 4 ? 0.7 : 1);
       this.splats.push({
@@ -344,7 +348,7 @@ export class FluidScene implements Scene {
       for (let i = 0; i < 5; i++) {
         const ang = Math.random() * Math.PI * 2;
         const c = this.color(frame, 1 + (i % 3), 0.8);
-        this.splats.push({ x: 0.2 + Math.random() * 0.6, y: 0.2 + Math.random() * 0.6, dx: Math.cos(ang) * 1200, dy: Math.sin(ang) * 1200, color: c, radius: 0.004 });
+        this.splats.push({ x: 0.2 + Math.random() * 0.6, y: 0.2 + Math.random() * 0.6, dx: Math.cos(ang) * 400, dy: Math.sin(ang) * 400, color: c, radius: 0.004 });
       }
     }
     this.queueMusic(frame);
@@ -358,7 +362,7 @@ export class FluidScene implements Scene {
       .use()
       .tex('uVelocity', 1, vel.read.tex)
       .tex('uCurl', 2, curl.tex)
-      .f('uStrength', 12 + frame.medBands[2] * 20)
+      .f('uStrength', 5 + frame.medBands[2] * 8)
       .f('uDt', dt);
     this.pass(r, P.vorticity, vel.write, simTexel);
     this.swap('vel');
