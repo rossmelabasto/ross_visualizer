@@ -520,15 +520,15 @@ void main() {
 class RainOverlay extends OverlayScene {
   readonly id = 'rain';
   readonly scale = 1;
+  // Kept exactly as Rossmel liked it: a light style, with bloom.
+  readonly straightAlpha = false;
   private atlas!: WebGLTexture;
   private brand = hexToLinearRgb('#afff00');
-  private clock = 0;
   protected readonly fs = /* glsl */ `
 uniform sampler2D uGlyphs;
 uniform vec2 uCell;
 uniform vec3 uBrand;
 uniform float uMusic;
-uniform float uClock;   // runs faster the harder the song goes
 float glyph(float code, vec2 cuv) {
   float idx = clamp(code, 32.0, 126.0) - 32.0;
   vec2 g = vec2(mod(idx, ${ATLAS_COLS}.0), floor(idx / ${ATLAS_COLS}.0));
@@ -543,7 +543,7 @@ void main() {
   if (mask <= 0.0) { fragColor = vec4(0.0); return; }
   float music = uMusic;
   float h = hash21(vec2(cell.x, 3.7));
-  float clock = uClock * (0.08 + h * 0.12) + h * 9.1;
+  float clock = uFlow * (0.08 + h * 0.12) + h * 9.1;
   float head = 1.0 - fract(clock);           // falls from the top
   // With music, how many columns rain follows how busy the song is.
   float density = mix(0.75, 0.2 + uSlowEnergy * 0.7 + uMedBands.x * 0.15, music);
@@ -551,29 +551,25 @@ void main() {
   float dist = fract((cell.y + 0.5) / grid.y - head);  // how far above the head
   float trail = 0.12 + h * 0.2 + uMedBands.x * 0.25 * music;
   float k = dist < trail ? pow(1.0 - dist / trail, 1.6) : 0.0;
-  float rate = 2.0 + h * 5.0 + uMedBands.z * 8.0 + uEnergy * 10.0 * music;
+  float rate = 2.0 + h * 5.0 + uMedBands.z * 8.0;
   float code = 33.0 + floor(hash21(cell + floor(uTime * rate) * 0.37) * 93.0);
   bool isHead = dist * grid.y < 1.0;
-  vec3 lime = isHead ? mix(uBrand, vec3(1.0), 0.6) : uBrand;
-  vec3 cover = isHead ? trueish(brightColor()) : trueish(mix(deepColor(), brightColor(), h * 0.5));
+  vec3 lime = isHead ? mix(uBrand, vec3(1.0), 0.6) : mix(uBrand, vivid(PRIMARY), 0.35 * music);
+  vec3 cover = isHead ? vivid(HIGHLIGHT) : vivid(mix(PRIMARY, ACCENT, h));
   vec3 ink = mix(lime, cover, music);
-  float a = glyph(code, cuv) * k * on * mask * (0.85 + uMedBands.y * 0.3 * music) * (1.0 + uBeat * 0.6 * music);
-  fragColor = vec4(ink, clamp(a, 0.0, 1.0));
+  float gain = (1.1 + uMedBands.y * music) * (1.0 + uBeat * 0.8 * music);
+  fragColor = vec4(ink * glyph(code, cuv) * k * on * mask * gain, 0.0);
 }`;
   init(r: Renderer) {
     super.init(r);
     this.atlas = createGlyphAtlas(r);
   }
-  protected draw(r: Renderer, frame: FrameState, _t: Target, p: Program) {
-    // In silence the rain keeps its idle pace; with music it speeds up with the energy.
-    const push = this.ctx.music * (frame.slowEnergy * 1.6 + frame.features.energy * 1.2 + frame.features.beat * 0.8);
-    this.clock += frame.dt * (0.5 + push);
+  protected draw(r: Renderer, _f: FrameState, _t: Target, p: Program) {
     const cellH = Math.round(18 * r.pixelRatio);
     p.tex('uGlyphs', 1, this.atlas)
       .f('uCell', Math.round(cellH * 0.6), cellH)
       .f('uBrand', this.brand[0], this.brand[1], this.brand[2])
-      .f('uMusic', this.ctx.music)
-      .f('uClock', this.clock);
+      .f('uMusic', this.ctx.music);
     r.drawFullscreen();
   }
 }
@@ -649,7 +645,7 @@ export function createOverlayScenes() {
 }
 
 /** Bloom strength per style (straight styles skip it). */
-export const OVERLAY_BLOOM: Record<OverlayMode, number> = { halo: 0, horizon: 0, orbit: 0, curtain: 0, embers: 0.9, rain: 0, wave: 0 };
+export const OVERLAY_BLOOM: Record<OverlayMode, number> = { halo: 0, horizon: 0, orbit: 0, curtain: 0, embers: 0.9, rain: 0.5, wave: 0 };
 
 /** Styles that stay on screen in silence (the others fade away). */
 export const SHOWN_IN_SILENCE: ReadonlySet<OverlayMode> = new Set(['rain']);
