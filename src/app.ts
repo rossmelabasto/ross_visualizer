@@ -838,6 +838,7 @@ export class App {
     const add = (mode: string | null, label: string) => {
       const b = document.createElement('button');
       b.textContent = label;
+      b.dataset.mode = mode ?? 'off';
       b.classList.toggle('on', mode === this.overlayMode);
       b.addEventListener('click', () => setOverlay(mode));
       box.appendChild(b);
@@ -866,6 +867,7 @@ export class App {
     for (const spec of specs) {
       const row = document.createElement('div');
       row.className = 'overlay-option';
+      row.dataset.key = spec.key;
       const label = document.createElement('span');
       label.textContent = this.t.overlayOption[spec.key] ?? spec.key;
       row.appendChild(label);
@@ -886,6 +888,7 @@ export class App {
         group.className = spots ? 'spots' : 'seg';
         for (const v of spec.values) {
           const b = document.createElement('button');
+          b.dataset.value = v;
           const name = this.t.overlayValue[v] ?? v;
           if (spots) {
             b.title = name;

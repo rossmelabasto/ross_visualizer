@@ -3,6 +3,7 @@ import { emptyFeatures, idleFeatures, type AudioFeatures } from '../audio/featur
 import { PcmAnalyser } from '../audio/pcm';
 import {
   artworkUrl,
+  debugLog,
   isDesktop,
   overlayInput,
   streamSystemAudio,
@@ -13,7 +14,7 @@ import {
 } from '../desktop/bridge';
 import type { Scene } from '../gl/renderer';
 import { Stage } from '../stage';
-import { isOverlayMode, OVERLAY_MODES, type OverlayMode, type OverlayOptions } from './modes';
+import { isOverlayMode, optionOf, OVERLAY_MODES, OVERLAY_OPTIONS, type OverlayMode, type OverlayOptions } from './modes';
 import { createOverlayScenes, OVERLAY_BLOOM, SHOWN_IN_SILENCE } from './scenes';
 
 // The desktop overlay: a transparent, click-through layer above every window (src-tauri sets
@@ -81,6 +82,7 @@ class OverlayApp {
     await watchOverlayOptions((o) => {
       this.options = o;
       this.updateInput();
+      this.report();
     });
     let first = true;
     await watchOverlay((m) => {
@@ -97,6 +99,13 @@ class OverlayApp {
     this.mode = m;
     this.switchedAt = performance.now() / 1000;
     this.updateInput();
+    this.report();
+  }
+
+  /** What the current style is really drawing with (RV_DEBUG only). */
+  private report() {
+    const keys = OVERLAY_OPTIONS[this.mode]?.map((o) => `${o.key}=${optionOf(this.options, this.mode, o.key)}`) ?? [];
+    debugLog(`drawing ${this.mode} ${keys.join(' ')}`);
   }
 
   private peek() {

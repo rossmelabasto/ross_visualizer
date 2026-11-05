@@ -4,7 +4,12 @@
 //! Command line (a running instance picks these up, so they work as niri key bindings):
 //!   ross-visualizer                      open the main window
 //!   ross-visualizer overlay toggle|off|next|prev|<style>
+//!   ross-visualizer restore              stay in the tray; bring the overlay back if it was on
 //!   ross-visualizer quit
+//!
+//! Debugging: RV_DEBUG=1 logs the main loop's lag, the captured level and what the pages
+//! report (`debug_log`); RV_TEST_SCRIPT=file.js runs that script in the main window once
+//! it has loaded (scripts/e2e/).
 
 mod audio;
 mod media;
@@ -60,12 +65,21 @@ fn handle_args(app: &AppHandle, args: &[String]) {
     match args.first().map(String::as_str) {
         None | Some("show") => show_main(app),
         Some("overlay") => overlay::command(app, args.get(1).map_or("toggle", String::as_str)),
+        Some("restore") => overlay::restore(app),
         Some("quit") => app.exit(0),
         Some(other) => eprintln!("ross-visualizer: unknown command {other:?}"),
     }
 }
 
+/// Pages report through this when RV_DEBUG is set (see src/desktop/bridge.ts `debugLog`).
+#[tauri::command]
+fn debug_log(window: tauri::WebviewWindow, msg: String) {
+    eprintln!("ross-visualizer: [{}] {msg}", window.label());
+}
+
 fn main() {
+    let debug = std::env::var_os("RV_DEBUG").is_some();
+    let test_script = std::env::var("RV_TEST_SCRIPT").ok().and_then(|f| std::fs::read_to_string(f).ok());
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             handle_args(app, argv.get(1..).unwrap_or_default());
@@ -84,7 +98,19 @@ fn main() {
             overlay::overlay_options,
             overlay::set_overlay_options,
             overlay::overlay_input,
+            debug_log,
         ])
+        .on_page_load(move |webview, payload| {
+            if payload.event() != tauri::webview::PageLoadEvent::Finished {
+                return;
+            }
+            if debug {
+                let _ = webview.eval("window.__RV_DEBUG__ = true;");
+            }
+            if let (Some(script), "main") = (&test_script, webview.label()) {
+                let _ = webview.eval(script);
+            }
+        })
         .setup(|app| {
             #[cfg(target_os = "linux")]
             if std::env::var_os("RV_DEBUG").is_some() {

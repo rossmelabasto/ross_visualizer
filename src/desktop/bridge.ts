@@ -94,3 +94,9 @@ export async function overlayInput(rects: [number, number, number, number][]) {
   const { invoke } = await core();
   await invoke('overlay_input', { rects: rects.map((r) => r.map(Math.round)) });
 }
+
+/** With RV_DEBUG set, pages report to the app's stderr (end-to-end tests read it). */
+export function debugLog(msg: string) {
+  if (!(window as { __RV_DEBUG__?: boolean }).__RV_DEBUG__) return;
+  core().then(({ invoke }) => invoke('debug_log', { msg }).catch(() => {}));
+}

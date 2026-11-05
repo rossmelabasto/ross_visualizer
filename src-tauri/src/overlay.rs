@@ -27,6 +27,8 @@ pub struct State {
     last: Mutex<&'static str>,
     /// Per-style settings, as the page defines them (src/overlay/modes.ts).
     options: Mutex<Value>,
+    /// Whether the overlay was on when the app last ran (see `restore`).
+    was_on: Mutex<bool>,
     /// Where the overlay takes the pointer (x, y, width, height in window pixels); usually
     /// nowhere. Orbit asks for its bubble, to notice the mouse and fade out of the way.
     input: Mutex<Vec<[i32; 4]>>,
@@ -34,7 +36,13 @@ pub struct State {
 
 impl Default for State {
     fn default() -> Self {
-        Self { mode: Mutex::new(None), last: Mutex::new(MODES[0].0), options: Mutex::new(json!({})), input: Mutex::new(Vec::new()) }
+        Self {
+            mode: Mutex::new(None),
+            last: Mutex::new(MODES[0].0),
+            was_on: Mutex::new(false),
+            options: Mutex::new(json!({})),
+            input: Mutex::new(Vec::new()),
+        }
     }
 }
 
@@ -54,11 +62,25 @@ pub fn load(app: &AppHandle) {
     if let Some(options) = saved.get("options").filter(|o| o.is_object()) {
         *state.options.lock().unwrap() = options.clone();
     }
+    *state.was_on.lock().unwrap() = saved.get("on").and_then(Value::as_bool).unwrap_or(false);
+}
+
+/// Bring the overlay back if it was on when the app last ran (after an update or a login).
+pub fn restore(app: &AppHandle) {
+    let state = app.state::<State>();
+    let (on, last) = (*state.was_on.lock().unwrap(), *state.last.lock().unwrap());
+    if on && current(app).is_none() {
+        set(app, Some(last));
+    }
 }
 
 fn save(app: &AppHandle) {
     let state = app.state::<State>();
-    let data = json!({ "last": *state.last.lock().unwrap(), "options": state.options.lock().unwrap().clone() });
+    let data = json!({
+        "last": *state.last.lock().unwrap(),
+        "on": state.mode.lock().unwrap().is_some(),
+        "options": state.options.lock().unwrap().clone(),
+    });
     if let Some(file) = settings_file(app) {
         let _ = std::fs::create_dir_all(file.parent().unwrap());
         if let Err(e) = std::fs::write(&file, serde_json::to_vec_pretty(&data).unwrap()) {
@@ -82,8 +104,8 @@ pub fn set(app: &AppHandle, mode: Option<&str>) {
     *state.mode.lock().unwrap() = mode;
     if let Some(m) = mode {
         *state.last.lock().unwrap() = m;
-        save(app);
     }
+    save(app);
     let _ = app.emit("overlay-mode", mode);
     crate::tray::sync(app, mode);
 
