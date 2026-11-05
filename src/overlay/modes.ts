@@ -16,12 +16,16 @@ export type OptionSpec =
 
 /** Per-style settings. Heights and sizes are fractions of the screen height. */
 export const OVERLAY_OPTIONS: Partial<Record<OverlayMode, OptionSpec[]>> = {
-  halo: [{ key: 'color', kind: 'choice', values: ['cover', 'white', 'black'], default: 'cover' }],
+  halo: [
+    { key: 'color', kind: 'choice', values: ['cover', 'white', 'black'], default: 'cover' },
+    { key: 'intensity', kind: 'range', min: 0.4, max: 3, step: 0.1, default: 1 },
+  ],
   horizon: [
     { key: 'position', kind: 'choice', values: EDGES, default: 'bottom' },
     { key: 'height', kind: 'range', min: 0.03, max: 0.3, step: 0.01, default: 0.09 },
   ],
   orbit: [
+    { key: 'inside', kind: 'choice', values: ['kaleido', 'cover'], default: 'kaleido' },
     { key: 'position', kind: 'choice', values: SPOTS, default: 'bottom-right' },
     { key: 'size', kind: 'range', min: 0.06, max: 0.22, step: 0.01, default: 0.12 },
   ],

@@ -856,7 +856,10 @@ export class App {
     if (!mode || !specs || !this.overlayOptions) return;
     const all = this.overlayOptions;
     const set = (key: string, value: string | number) => {
-      const next = { ...all, [mode]: { ...all[mode], [key]: value } };
+      // Build on the latest settings, not on the ones these controls were drawn with:
+      // otherwise moving one slider would undo the other choices made since.
+      const now = this.overlayOptions ?? {};
+      const next = { ...now, [mode]: { ...now[mode], [key]: value } };
       this.overlayOptions = next;
       setOverlayOptions(next);
     };

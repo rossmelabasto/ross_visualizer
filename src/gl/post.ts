@@ -92,6 +92,10 @@ void main() {
     float solid = mix(texture(uA, uv).a, texture(uB, uv).a, uMix);
     float lit = max(max(max(c.r, max(c.g, c.b)) * 1.6, solid), 0.0);
     alpha = clamp(mix(lit, solid, uStraight), 0.0, 1.0) * uFade;
+    // Straight scenes also skip the bloom and the tone curve: their color is the artwork's
+    // color as it is, so a dark green stays dark green instead of burning towards white.
+    vec3 plain = clamp(sampleScene(uv), 0.0, 1.0);
+    c = mix(c, plain, uStraight);
   } else {
     c = mix(aces(uBg) * 0.6, c, mix(0.55, 1.0, vig));
   }

@@ -22,8 +22,12 @@ import { createOverlayScenes, OVERLAY_BLOOM, SHOWN_IN_SILENCE } from './scenes';
 const TRANSITION = 0.8;
 /** After this long without sound the overlay fades away, and stops drawing once it's gone. */
 const QUIET_AFTER = 5;
-/** How long the bubble stays faded out after the mouse touches it. */
-const PEEK_SECONDS = 3;
+/**
+ * How long the bubble stays faded out after the mouse touches it. While faded the window
+ * can't see the mouse (the clicks go through), so this is short: if the mouse is still there
+ * and moves, it fades out again.
+ */
+const PEEK_SECONDS = 1.4;
 
 class OverlayApp {
   private readonly stage: Stage;
@@ -55,7 +59,8 @@ class OverlayApp {
     const asked = params.get('mode');
     this.mode = isOverlayMode(asked) ? asked : 'halo';
     // Preview only: any other parameter is a setting of that style (?mode=orbit&position=center).
-    for (const [k, v] of params) if (k !== 'mode') (this.options[this.mode] ??= {})[k] = Number.isNaN(Number(v)) ? v : Number(v);
+    // and ?art=<url> paints with that artwork.
+    for (const [k, v] of params) if (k !== 'mode' && k !== 'art') (this.options[this.mode] ??= {})[k] = Number.isNaN(Number(v)) ? v : Number(v);
     this.onResize();
     window.addEventListener('resize', () => this.onResize());
     // The window only takes the pointer over Orbit's bubble: touching it fades the bubble away
@@ -96,7 +101,7 @@ class OverlayApp {
 
   private peek() {
     if (this.mode !== 'orbit' || this.scenes.orbit.peeking) return;
-    this.scenes.orbit.peek(performance.now() / 1000);
+    this.scenes.orbit.peek(performance.now() / 1000, PEEK_SECONDS);
     this.updateInput();
     window.setTimeout(() => this.updateInput(), PEEK_SECONDS * 1000 + 50);
   }
@@ -130,6 +135,8 @@ class OverlayApp {
    */
   private preview() {
     document.body.style.background = 'linear-gradient(135deg, #1d2129, #2a2f3a)';
+    const art = new URLSearchParams(location.search).get('art');
+    if (art) this.stage.setCover(art);
     const start = () => this.engine.useDemo().catch(() => {});
     start();
     window.addEventListener('pointerdown', start, { once: true });
