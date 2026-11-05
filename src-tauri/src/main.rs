@@ -81,12 +81,16 @@ fn main() {
             media::media_control,
             overlay::set_overlay,
             overlay::overlay_mode,
+            overlay::overlay_options,
+            overlay::set_overlay_options,
+            overlay::overlay_input,
         ])
         .setup(|app| {
             #[cfg(target_os = "linux")]
             if std::env::var_os("RV_DEBUG").is_some() {
                 watch_main_loop();
             }
+            overlay::load(app.handle());
             media::watch(app.handle().clone());
             tray::build(app)?;
             let args: Vec<String> = std::env::args().skip(1).collect();

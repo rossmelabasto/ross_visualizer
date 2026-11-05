@@ -130,6 +130,7 @@ export class Stage {
       prev.scene.render(r, frame, b);
     }
     const mix = prev ? prev.mix : 0;
-    r.composite(a, b, mix, frame, { bloom: bloom * (1 - mix) + (prev ? prev.bloom * mix : 0), fade });
+    const straight = (scene.straightAlpha ? 1 : 0) * (1 - mix) + (prev?.scene.straightAlpha ? mix : 0);
+    r.composite(a, b, mix, frame, { bloom: bloom * (1 - mix) + (prev ? prev.bloom * mix : 0), fade, straight });
   }
 }

@@ -1,11 +1,20 @@
 import { AudioEngine } from '../audio/engine';
 import { emptyFeatures, idleFeatures, type AudioFeatures } from '../audio/features';
 import { PcmAnalyser } from '../audio/pcm';
-import { artworkUrl, isDesktop, streamSystemAudio, watchNowPlaying, watchOverlay, type NowPlaying } from '../desktop/bridge';
+import {
+  artworkUrl,
+  isDesktop,
+  overlayInput,
+  streamSystemAudio,
+  watchNowPlaying,
+  watchOverlay,
+  watchOverlayOptions,
+  type NowPlaying,
+} from '../desktop/bridge';
 import type { Scene } from '../gl/renderer';
 import { Stage } from '../stage';
-import { isOverlayMode, OVERLAY_MODES, type OverlayMode } from './modes';
-import { createOverlayScenes, OVERLAY_BLOOM } from './scenes';
+import { isOverlayMode, OVERLAY_MODES, type OverlayMode, type OverlayOptions } from './modes';
+import { createOverlayScenes, OVERLAY_BLOOM, SHOWN_IN_SILENCE } from './scenes';
 
 // The desktop overlay: a transparent, click-through layer above every window (src-tauri sets
 // that up). Same audio and palette as the main window, but only the edge styles in ./scenes.
@@ -13,6 +22,8 @@ import { createOverlayScenes, OVERLAY_BLOOM } from './scenes';
 const TRANSITION = 0.8;
 /** After this long without sound the overlay fades away, and stops drawing once it's gone. */
 const QUIET_AFTER = 5;
+/** How long the bubble stays faded out after the mouse touches it. */
+const PEEK_SECONDS = 3;
 
 class OverlayApp {
   private readonly stage: Stage;
@@ -32,14 +43,24 @@ class OverlayApp {
   private title = '';
   private artKey: string | null = null;
   private artBlob: string | null = null;
+  private options: OverlayOptions = {};
+  private music = 0;
+  /** The pointer area last sent to the window, to avoid resending it every frame. */
+  private inputKey = '';
 
   constructor(canvas: HTMLCanvasElement) {
     this.stage = new Stage(canvas, true);
     for (const s of Object.values(this.scenes)) s.init(this.stage.renderer);
-    const asked = new URLSearchParams(location.search).get('mode');
+    const params = new URLSearchParams(location.search);
+    const asked = params.get('mode');
     this.mode = isOverlayMode(asked) ? asked : 'halo';
+    // Preview only: any other parameter is a setting of that style (?mode=orbit&position=center).
+    for (const [k, v] of params) if (k !== 'mode') (this.options[this.mode] ??= {})[k] = Number.isNaN(Number(v)) ? v : Number(v);
     this.onResize();
     window.addEventListener('resize', () => this.onResize());
+    // The window only takes the pointer over Orbit's bubble: touching it fades the bubble away
+    // and lets the clicks through for a few seconds.
+    window.addEventListener('pointermove', () => this.peek());
     if (isDesktop) this.start();
     else this.preview();
     window.setInterval(() => this.analyze(), 1000 / 60);
@@ -52,19 +73,55 @@ class OverlayApp {
     this.stage.setCover(null, 3);
     await streamSystemAudio(analyser);
     await watchNowPlaying((n) => this.onTrack(n));
+    await watchOverlayOptions((o) => {
+      this.options = o;
+      this.updateInput();
+    });
     let first = true;
     await watchOverlay((m) => {
       if (!isOverlayMode(m)) return;
-      if (first) {
-        // The style the overlay was opened with: no cross-fade from the default.
-        first = false;
-        this.mode = m;
-      } else if (m !== this.mode) {
-        this.prev = this.mode;
-        this.mode = m;
-        this.switchedAt = performance.now() / 1000;
-      }
+      // The style the overlay was opened with: no cross-fade from the default.
+      this.setMode(m, !first);
+      first = false;
     });
+  }
+
+  private setMode(m: OverlayMode, fade = true) {
+    if (m === this.mode) return;
+    this.prev = fade ? this.mode : null;
+    this.mode = m;
+    this.switchedAt = performance.now() / 1000;
+    this.updateInput();
+  }
+
+  private peek() {
+    if (this.mode !== 'orbit' || this.scenes.orbit.peeking) return;
+    this.scenes.orbit.peek(performance.now() / 1000);
+    this.updateInput();
+    window.setTimeout(() => this.updateInput(), PEEK_SECONDS * 1000 + 50);
+  }
+
+  /** Take the pointer over Orbit's bubble (while it's on screen), nowhere otherwise. */
+  private updateInput() {
+    if (!isDesktop) return;
+    let rects: [number, number, number, number][] = [];
+    if (this.mode === 'orbit' && !this.scenes.orbit.peeking && !this.blank) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      this.scenes.orbit.ctx.options = this.options;
+      const { x, y, R } = this.scenes.orbit.bubble(w, h);
+      // The circle as horizontal strips (the page's y runs down, the shader's up).
+      const strips = 10;
+      for (let i = 0; i < strips; i++) {
+        const dy = ((i + 0.5) / strips) * 2 - 1;
+        const half = R * Math.sqrt(1 - dy * dy);
+        rects.push([x - half, h - y + (i / strips) * 2 * R - R, half * 2, (2 * R) / strips + 1]);
+      }
+    }
+    const key = JSON.stringify(rects);
+    if (key === this.inputKey) return;
+    this.inputKey = key;
+    overlayInput(rects).catch(() => {});
   }
 
   /**
@@ -78,11 +135,7 @@ class OverlayApp {
     window.addEventListener('pointerdown', start, { once: true });
     window.addEventListener('keydown', (e) => {
       const m = OVERLAY_MODES[Number(e.key) - 1];
-      if (m && m !== this.mode) {
-        this.prev = this.mode;
-        this.mode = m;
-        this.switchedAt = performance.now() / 1000;
-      }
+      if (m) this.setMode(m);
     });
   }
 
@@ -101,6 +154,7 @@ class OverlayApp {
   private onResize() {
     // A glow along the edges doesn't need the full HiDPI resolution; the GPU is for the apps below.
     this.stage.renderer.resize(window.innerWidth, window.innerHeight, 1);
+    this.updateInput();
   }
 
   private analyze() {
@@ -124,7 +178,9 @@ class OverlayApp {
       this.beatLatch = false;
     } else f = idleFeatures(this.idle, now);
 
-    const want = now - this.lastSound < QUIET_AFTER ? 1 : 0;
+    const playing = now - this.lastSound < 1.5 ? 1 : 0;
+    this.music += (playing - this.music) * (1 - Math.exp(-dt / 1.0));
+    const want = SHOWN_IN_SILENCE.has(this.mode) || now - this.lastSound < QUIET_AFTER ? 1 : 0;
     this.fade += (want - this.fade) * (1 - Math.exp(-dt / (want ? 0.4 : 1.2)));
     if (this.fade < 0.003 && !want) {
       // Nothing to show: clear once and let the GPU rest until the music comes back.
@@ -134,10 +190,15 @@ class OverlayApp {
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
         this.blank = true;
+        this.updateInput();
       }
       return;
     }
-    this.blank = false;
+    if (this.blank) {
+      this.blank = false;
+      this.updateInput();
+    }
+    for (const s of Object.values(this.scenes)) s.ctx = { options: this.options, music: this.music };
 
     const frame = this.stage.step(f, now, dt, this.title, 1);
     const scene: Scene = this.scenes[this.mode];

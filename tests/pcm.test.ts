@@ -56,4 +56,36 @@ describe('PcmAnalyser', () => {
     expect(beats).toBeGreaterThanOrEqual(18);
     expect(beats).toBeLessThanOrEqual(25);
   });
+
+  it('shows the highs of a quiet mix as much as a loud one', () => {
+    // Kick + hi-hat hiss, at full level and 20 dB down: the high band should read the same.
+    const highs = (gain: number) => {
+      const a = new PcmAnalyser(SR);
+      const fx = new FeatureExtractor(SR, a.fftSize);
+      const freq = new Float32Array(a.frequencyBinCount);
+      let seed = 11;
+      let prev = 0;
+      const values: number[] = [];
+      for (let frame = 0; frame < 60 * 8; frame++) {
+        const block = new Float32Array(SR / 60);
+        for (let i = 0; i < block.length; i++) {
+          const t = (frame * block.length + i) / SR;
+          const p = t % 0.5;
+          const white = ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1;
+          const hiss = white - prev;
+          prev = white;
+          block[i] = (Math.sin(2 * Math.PI * 55 * p) * Math.exp(-p * 20) * 0.7 + hiss * Math.exp(-(t % 0.25) * 40) * 0.2) * gain;
+        }
+        a.push(block);
+        a.getFloatFrequencyData(freq);
+        const f = fx.update(freq, null, 1 / 60, frame / 60);
+        if (frame > 120) values.push(f.high);
+      }
+      return values.reduce((s, v) => s + v, 0) / values.length;
+    };
+    const loud = highs(1);
+    const quiet = highs(0.1);
+    expect(loud).toBeGreaterThan(0.1);
+    expect(Math.abs(loud - quiet)).toBeLessThan(0.08);
+  });
 });

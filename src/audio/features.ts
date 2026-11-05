@@ -54,6 +54,8 @@ const BANDS = {
   high: [3000, 14000],
 } as const;
 type BandName = keyof typeof BANDS;
+/** Share of the loudest band below which a band's own peak doesn't count (see update). */
+const FLOOR_SHARE: Record<BandName, number> = { bass: 0.12, lowMid: 0.08, mid: 0.04, high: 0.015 };
 
 const KICK_RANGE = [40, 160] as const;
 const FLUX_RANGE = [40, 9000] as const;
@@ -195,7 +197,10 @@ export class FeatureExtractor {
       const [lo, hi] = BANDS[name];
       const raw = this.bandLevel(lo, hi);
       this.bandPeaks[name] = Math.max(raw, this.bandPeaks[name] * decay);
-      const ref = Math.max(this.bandPeaks[name], this.globalPeak * 0.12, NOISE_FLOOR * 2);
+      // Each band is measured against its own recent peak, but never against less than a slice
+      // of the loudest band: an empty band shouldn't be blown up to full. The slice is smaller
+      // for the highs, which in real music sit 20–30 dB under the bass.
+      const ref = Math.max(this.bandPeaks[name], this.globalPeak * FLOOR_SHARE[name], NOISE_FLOOR * 0.1);
       let v = f.silent ? 0 : Math.min(1, Math.pow(raw / ref, 1.35) * this.sensitivity);
       const attack = name === 'bass' ? 0.02 : 0.035;
       const release = name === 'high' ? 0.12 : 0.22;

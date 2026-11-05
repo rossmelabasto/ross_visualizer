@@ -46,6 +46,7 @@ uniform float uBloomAmt;
 uniform float uBeat;
 uniform float uTransparent;
 uniform float uFade;
+uniform float uStraight;  // 1: the scene's alpha is its opacity (true colors, even black)
 uniform vec3 uBg;
 
 vec3 sampleScene(vec2 uv) {
@@ -85,10 +86,12 @@ void main() {
   float vig = smoothstep(1.05, 0.25, length(d * vec2(uRes.x / uRes.y, 1.0)) * 0.9);
   float alpha = 1.0;
   if (uTransparent > 0.5) {
-    // Light shows through as much as it shines; a scene can also ask for solid pixels
-    // through its own alpha (the overlay's bubble).
+    // Light shows through as much as it shines, and a scene can ask for more through its
+    // alpha (the overlay's bubble). Straight scenes give their opacity outright instead, so a
+    // dark color can be dark and black can shade what's below.
     float solid = mix(texture(uA, uv).a, texture(uB, uv).a, uMix);
-    alpha = clamp(max(max(c.r, max(c.g, c.b)) * 1.6, solid), 0.0, 1.0) * uFade;
+    float lit = max(max(max(c.r, max(c.g, c.b)) * 1.6, solid), 0.0);
+    alpha = clamp(mix(lit, solid, uStraight), 0.0, 1.0) * uFade;
   } else {
     c = mix(aces(uBg) * 0.6, c, mix(0.55, 1.0, vig));
   }

@@ -2,6 +2,7 @@
 // web build doesn't carry the Tauri API.
 
 import type { PcmAnalyser } from '../audio/pcm';
+import type { OverlayOptions } from '../overlay/modes';
 
 export const isDesktop = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
@@ -73,4 +74,23 @@ export async function watchOverlay(cb: (mode: string | null) => void) {
   const { listen } = await events();
   await listen<string | null>('overlay-mode', (e) => cb(e.payload));
   cb(await invoke<string | null>('overlay_mode'));
+}
+
+/** Each overlay style's settings, now and whenever they change (from either window). */
+export async function watchOverlayOptions(cb: (options: OverlayOptions) => void) {
+  const { invoke } = await core();
+  const { listen } = await events();
+  await listen<OverlayOptions>('overlay-options', (e) => cb(e.payload));
+  cb(await invoke<OverlayOptions>('overlay_options'));
+}
+
+export async function setOverlayOptions(options: OverlayOptions) {
+  const { invoke } = await core();
+  await invoke('set_overlay_options', { options });
+}
+
+/** Where the overlay window takes the pointer, as [x, y, w, h] rectangles in CSS pixels. */
+export async function overlayInput(rects: [number, number, number, number][]) {
+  const { invoke } = await core();
+  await invoke('overlay_input', { rects: rects.map((r) => r.map(Math.round)) });
 }

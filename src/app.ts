@@ -19,13 +19,15 @@ import {
   isDesktop,
   mediaControl,
   setOverlay,
+  setOverlayOptions,
   streamSystemAudio,
   toggleWindowFullscreen,
   watchNowPlaying,
   watchOverlay,
+  watchOverlayOptions,
   type NowPlaying as SystemTrack,
 } from './desktop/bridge';
-import { OVERLAY_MODES } from './overlay/modes';
+import { OVERLAY_MODES, OVERLAY_OPTIONS, optionOf, SPOTS, type OverlayMode, type OverlayOptions } from './overlay/modes';
 import { Stage } from './stage';
 import { detectLang, safeGet, safeSet, strings, type Lang, type Strings } from './ui/i18n';
 import { icons } from './ui/icons';
@@ -87,6 +89,7 @@ export class App {
   private artKey: string | null = null;
   private artBlob: string | null = null;
   private overlayMode: string | null = null;
+  private overlayOptions: OverlayOptions | null = null;
   private windowFullscreen = false;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -786,6 +789,12 @@ export class App {
     try {
       await streamSystemAudio(analyser);
       await watchNowPlaying((n) => this.onSystemTrack(n));
+      await watchOverlayOptions((o) => {
+        // Controls are drawn once per style: redrawing them mid-drag would drop the slider.
+        const first = !this.overlayOptions;
+        this.overlayOptions = o;
+        if (first) this.renderOverlayModes();
+      });
       await watchOverlay((mode) => {
         this.overlayMode = mode;
         this.renderOverlayModes();
@@ -835,6 +844,61 @@ export class App {
     };
     add(null, this.t.overlayOff);
     for (const m of OVERLAY_MODES) add(m, this.t.overlays[m]);
+    this.renderOverlayOptions();
+  }
+
+  /** The current style's settings (position, height…), below the style picker. */
+  private renderOverlayOptions() {
+    const box = $('overlay-options');
+    box.innerHTML = '';
+    const mode = this.overlayMode as OverlayMode | null;
+    const specs = mode ? OVERLAY_OPTIONS[mode] : undefined;
+    if (!mode || !specs || !this.overlayOptions) return;
+    const all = this.overlayOptions;
+    const set = (key: string, value: string | number) => {
+      const next = { ...all, [mode]: { ...all[mode], [key]: value } };
+      this.overlayOptions = next;
+      setOverlayOptions(next);
+    };
+    for (const spec of specs) {
+      const row = document.createElement('div');
+      row.className = 'overlay-option';
+      const label = document.createElement('span');
+      label.textContent = this.t.overlayOption[spec.key] ?? spec.key;
+      row.appendChild(label);
+      const current = optionOf(all, mode, spec.key);
+      if (spec.kind === 'range') {
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = String(spec.min);
+        input.max = String(spec.max);
+        input.step = String(spec.step);
+        input.value = String(current);
+        input.setAttribute('aria-label', label.textContent);
+        input.addEventListener('input', () => set(spec.key, Number(input.value)));
+        row.appendChild(input);
+      } else {
+        const spots = spec.values === SPOTS;
+        const group = document.createElement('div');
+        group.className = spots ? 'spots' : 'seg';
+        for (const v of spec.values) {
+          const b = document.createElement('button');
+          const name = this.t.overlayValue[v] ?? v;
+          if (spots) {
+            b.title = name;
+            b.setAttribute('aria-label', name);
+          } else b.textContent = name;
+          b.classList.toggle('on', v === current);
+          b.addEventListener('click', () => {
+            group.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+            set(spec.key, v);
+          });
+          group.appendChild(b);
+        }
+        row.appendChild(group);
+      }
+      box.appendChild(row);
+    }
   }
 
   private cycleOverlay() {
