@@ -42,8 +42,8 @@ ross-visualizer overlay toggle   # or off | next | prev | halo | horizon | orbit
 A running instance picks up these commands, so they work as key bindings, e.g. in niri:
 
 ```kdl
-Mod+Shift+V { spawn "ross-visualizer" "overlay" "toggle"; }
-Mod+Shift+B { spawn "ross-visualizer" "overlay" "next"; }
+Mod+Ctrl+V { spawn "ross-visualizer" "overlay" "toggle"; }
+Mod+Ctrl+B { spawn "ross-visualizer" "overlay" "next"; }
 ```
 
 Nothing is uploaded: all the audio analysis happens in your browser.

@@ -34,8 +34,8 @@ ross-visualizer overlay toggle   # o off | next | prev | halo | horizon | orbit 
 Una instancia abierta recibe estos comandos, así que sirven como atajos de teclado, por ejemplo en niri:
 
 ```kdl
-Mod+Shift+V { spawn "ross-visualizer" "overlay" "toggle"; }
-Mod+Shift+B { spawn "ross-visualizer" "overlay" "next"; }
+Mod+Ctrl+V { spawn "ross-visualizer" "overlay" "toggle"; }
+Mod+Ctrl+B { spawn "ross-visualizer" "overlay" "next"; }
 ```
 
 No se sube nada: todo el análisis de audio ocurre en tu navegador.
