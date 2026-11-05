@@ -1,0 +1,29 @@
+[package]
+name = "ross-visualizer"
+version = "0.1.0"
+description = "Music visualizer that listens to your computer and paints with the album art"
+authors = ["Rossmel Abasto"]
+license = "MIT"
+repository = "https://github.com/rossmelabasto/ross_visualizer"
+edition = "2021"
+rust-version = "1.80"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+gtk-layer-shell = { version = "0.8", features = ["v0_6"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

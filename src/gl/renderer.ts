@@ -322,7 +322,7 @@ export class Renderer {
    * Bloom + tonemap + grade of `a` (optionally cross-faded with `b`) onto the canvas.
    * Bloom runs at a quarter of the canvas resolution.
    */
-  composite(a: Target, b: Target | null, mix: number, frame: FrameState, opts: { bloom: number }) {
+  composite(a: Target, b: Target | null, mix: number, frame: FrameState, opts: { bloom: number; fade?: number }) {
     const gl = this.gl;
     gl.disable(gl.BLEND);
     const bw = this.width / 4;
@@ -362,6 +362,7 @@ export class Renderer {
       .f('uBloomAmt', opts.bloom * (0.75 + frame.medBands[0] * 0.45))
       .f('uBeat', f.beat)
       .f('uTransparent', frame.transparent ? 1 : 0)
+      .f('uFade', opts.fade ?? 1)
       .v3('uBg', frame.palette.subarray(0, 3));
     this.drawFullscreen();
   }

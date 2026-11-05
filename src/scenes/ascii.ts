@@ -1,8 +1,8 @@
 import type { FrameState, Program, Renderer, Scene, Target } from '../gl/renderer';
 import { hexToLinearRgb } from '../color/oklab';
 
-const ATLAS_COLS = 16;
-const ATLAS_ROWS = 6; // 96 slots for printable ASCII 32..126
+export const ATLAS_COLS = 16;
+export const ATLAS_ROWS = 6; // 96 slots for printable ASCII 32..126
 const TEXT_W = 192;
 const TEXT_LINES = 3;
 
@@ -118,6 +118,46 @@ function bar(v: number, n = 10) {
   return '#'.repeat(k) + '-'.repeat(n - k);
 }
 
+/** White-on-black glyphs of printable ASCII in JetBrains Mono, ATLAS_COLS × ATLAS_ROWS cells. */
+export function createGlyphAtlas(r: Renderer): WebGLTexture {
+  const tex = r.gl.createTexture()!;
+  drawGlyphs(r, tex);
+  // The web font may arrive after init; redraw once it does.
+  document.fonts?.ready.then(() => drawGlyphs(r, tex));
+  return tex;
+}
+
+function drawGlyphs(r: Renderer, tex: WebGLTexture) {
+  const size = 48;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
+  const font = `500 ${size}px "JetBrains Mono", ui-monospace, monospace`;
+  ctx.font = font;
+  const cw = Math.ceil(ctx.measureText('M').width);
+  const ch = Math.ceil(size * 1.25);
+  canvas.width = cw * ATLAS_COLS;
+  canvas.height = ch * ATLAS_ROWS;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = font;
+  ctx.fillStyle = '#fff';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  for (let i = 0; i < 95; i++) {
+    const x = (i % ATLAS_COLS) * cw + cw / 2;
+    const y = Math.floor(i / ATLAS_COLS) * ch + ch / 2;
+    ctx.fillText(String.fromCharCode(32 + i), x, y);
+  }
+  const gl = r.gl;
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, gl.RED, gl.UNSIGNED_BYTE, canvas);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+}
+
 export class AsciiScene implements Scene {
   readonly id = 'ascii';
   readonly scale = 1;
@@ -138,41 +178,7 @@ export class AsciiScene implements Scene {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-    this.atlas = gl.createTexture()!;
-    this.buildAtlas(r);
-    // The web font may arrive after init; rebuild once it does.
-    document.fonts?.ready.then(() => this.buildAtlas(r));
-  }
-
-  private buildAtlas(r: Renderer) {
-    const size = 48;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    const font = `500 ${size}px "JetBrains Mono", ui-monospace, monospace`;
-    ctx.font = font;
-    const cw = Math.ceil(ctx.measureText('M').width);
-    const ch = Math.ceil(size * 1.25);
-    canvas.width = cw * ATLAS_COLS;
-    canvas.height = ch * ATLAS_ROWS;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.font = font;
-    ctx.fillStyle = '#fff';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    for (let i = 0; i < 95; i++) {
-      const x = (i % ATLAS_COLS) * cw + cw / 2;
-      const y = Math.floor(i / ATLAS_COLS) * ch + ch / 2;
-      ctx.fillText(String.fromCharCode(32 + i), x, y);
-    }
-    const gl = r.gl;
-    gl.bindTexture(gl.TEXTURE_2D, this.atlas);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, gl.RED, gl.UNSIGNED_BYTE, canvas);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this.atlas = createGlyphAtlas(r);
   }
 
   private setLine(i: number, s: string) {

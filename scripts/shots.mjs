@@ -1,7 +1,6 @@
 // Screenshot every scene in a headless browser (software WebGL, so no GPU needed).
 //   node scripts/shots.mjs [demo|search] [--out dir] [--base url] [--q "query"] [--mobile] [--high] [--wait 9]
-//                          [--only fluid,aurora] [--frames 3]
-// The tunnel is shot once per version.
+//                          [--only fluid,aurora] [--frames 3] [--gpu] [--clean]
 // Uses the system Chromium; set CHROMIUM to point elsewhere.
 import { mkdirSync } from 'node:fs';
 import { parseArgs } from 'node:util';
@@ -71,9 +70,7 @@ const only = opt.only ? opt.only.split(',') : scenes;
 for (const [i, name] of scenes.entries()) {
   if (!only.includes(name)) continue;
   await page.keyboard.press(String(i + 1));
-  const versions = name === 'tunnel' ? 3 : 1;
-  for (let v = 0; v < versions; v++) {
-    if (v > 0) await page.keyboard.press('v');
+  {
     for (let k = 0; k < Number(opt.frames); k++) {
       if (!opt.mobile && !opt.clean) await page.mouse.move(10 + i + k, 10);
       await page.waitForTimeout(2500);
@@ -81,7 +78,7 @@ for (const [i, name] of scenes.entries()) {
         await page.evaluate(() => document.body.classList.add('idle'));
         await page.waitForTimeout(800);
       }
-      const tag = `${versions > 1 ? `-v${v + 1}` : ''}${Number(opt.frames) > 1 ? `-${k}` : ''}`;
+      const tag = Number(opt.frames) > 1 ? `-${k}` : '';
       await page.screenshot({ path: `${opt.out}/${mode}-${i + 2}-${name}${tag}.png` });
       if (opt.gpu) console.log(name + tag, (await page.locator('#stats').textContent()).match(/fps.*/)?.[0]);
     }

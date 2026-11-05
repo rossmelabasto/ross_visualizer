@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ross_visualizer",
+  "mainBinaryName": "ross-visualizer",
+  "version": "0.1.0",
+  "identifier": "com.rossmel.visualizer",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://127.0.0.1:5190",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "ross_visualizer",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 480,
+        "minHeight": 320,
+        "visible": false
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "rpm", "appimage"],
+    "category": "AudioVideo",
+    "shortDescription": "Music visualizer with a desktop overlay",
+    "longDescription": "Listens to everything your computer plays and paints it with the colors of the album art, full screen or as a click-through overlay above your windows.",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"],
+    "linux": {
+      "deb": { "depends": ["pipewire-bin", "playerctl", "libgtk-layer-shell0"] },
+      "rpm": { "depends": ["pipewire-utils", "playerctl", "gtk-layer-shell"] }
+    }
+  }
+}

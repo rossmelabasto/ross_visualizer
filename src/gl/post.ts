@@ -45,6 +45,7 @@ uniform float uTime;
 uniform float uBloomAmt;
 uniform float uBeat;
 uniform float uTransparent;
+uniform float uFade;
 uniform vec3 uBg;
 
 vec3 sampleScene(vec2 uv) {
@@ -84,7 +85,10 @@ void main() {
   float vig = smoothstep(1.05, 0.25, length(d * vec2(uRes.x / uRes.y, 1.0)) * 0.9);
   float alpha = 1.0;
   if (uTransparent > 0.5) {
-    alpha = clamp(max(c.r, max(c.g, c.b)) * 1.6, 0.0, 1.0);
+    // Light shows through as much as it shines; a scene can also ask for solid pixels
+    // through its own alpha (the overlay's bubble).
+    float solid = mix(texture(uA, uv).a, texture(uB, uv).a, uMix);
+    alpha = clamp(max(max(c.r, max(c.g, c.b)) * 1.6, solid), 0.0, 1.0) * uFade;
   } else {
     c = mix(aces(uBg) * 0.6, c, mix(0.55, 1.0, vig));
   }

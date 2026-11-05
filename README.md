@@ -18,8 +18,33 @@
 
 - **Search any song** and it plays the 30-second preview (iTunes Search API, no login) while the visuals take the palette of its cover.
 - **Or listen to your own audio**: the microphone, your computer's audio (Chrome/Edge screen-share with "Share audio"), a local file (it reads the embedded cover from MP3/FLAC tags), or a built-in synth track.
-- **Seven scenes**, cross-faded: ink poured into water by the music (a real Navier–Stokes fluid solver: each band sprays its own color, beats fire bursts), a volumetric nebula of glowing gas and dark dust, a 120k-particle galaxy that morphs between spiral, barred, ring and elliptical shapes, a volumetric aurora seen from the shore of a lake, a kaleidoscope built from the artwork, a tunnel of contour lines with three versions to pick from (`V`), and a terminal that renders the spectrum in ASCII.
+- **Seven scenes**, cross-faded: ink poured into water by the music (a real Navier–Stokes fluid solver: each band sprays its own color, beats fire bursts), a volumetric nebula of glowing gas and dark dust, a 120k-particle galaxy that morphs between spiral, barred, ring and elliptical shapes, a volumetric aurora seen from the shore of a lake, a kaleidoscope built from the artwork, a Swiss-cheese tunnel of contour lines that keeps splitting into holes, and a terminal that renders the spectrum in ASCII.
 - Works on phones: swipe to change scene, installable as a PWA, keeps the screen awake.
+- **Desktop app (Linux)** that listens to everything the computer plays, follows the player that's on (Spotify, a browser…) for the artwork, and adds a click-through **overlay** above every window.
+
+## Desktop app
+
+The same visualizer in a [Tauri](https://tauri.app) app (`src-tauri/`). There's no source to pick: it hears the whole system and paints with the artwork of whatever is playing.
+
+- **Audio**: `pw-record` taps PipeWire's default output and streams raw PCM to the page as binary IPC messages; `src/audio/pcm.ts` does the same Blackman-windowed FFT an `AnalyserNode` does, so the beat detector is shared with the web.
+- **What's playing**: `playerctl` follows every MPRIS player and picks the one that's playing; the artwork is fetched natively (no CORS, `file://` works) and the dock's play/next buttons drive that player.
+- **Overlay**: a transparent window on the layer-shell *overlay* layer, anchored to the screen edges, with no keyboard focus and an empty input region, so clicks reach the windows underneath. Seven styles: *Halo* (the screen's frame glows, spectrum laid around it), *Horizon* (mirrored bars along the bottom), *Orbit* (a bubble with the kaleidoscope, ringed by the spectrum), *Curtain* (aurora hanging from the top), *Embers*, *rOS rain* and *Wave*. It fades out after a few seconds of silence and stops drawing.
+
+Needs PipeWire (`pw-record`), `playerctl`, `webkit2gtk-4.1` and `gtk-layer-shell` (Wayland compositors with layer-shell: niri, Hyprland, Sway, KDE…).
+
+```sh
+npm run desktop                  # dev build with hot reload
+scripts/install-desktop.sh       # release build into ~/.local/bin with a launcher
+ross-visualizer                  # open the window (it also lives in the tray)
+ross-visualizer overlay toggle   # or off | next | prev | halo | horizon | orbit | curtain | embers | rain | wave
+```
+
+A running instance picks up these commands, so they work as key bindings, e.g. in niri:
+
+```kdl
+Mod+Shift+V { spawn "ross-visualizer" "overlay" "toggle"; }
+Mod+Shift+B { spawn "ross-visualizer" "overlay" "next"; }
+```
 
 Nothing is uploaded: all the audio analysis happens in your browser.
 
@@ -53,11 +78,10 @@ npm run build
 
 ## Keys
 
-`1`–`7` scenes · `←`/`→` previous/next · `Space` play/pause · `F` fullscreen · `H` hide the interface · `V` tunnel version · `/` search
+`1`–`7` scenes · `←`/`→` previous/next · `Space` play/pause · `F` fullscreen · `H` hide the interface · `/` search · `O` next overlay style (desktop)
 
 ## Roadmap
 
-- Desktop app (Tauri) with a click-through **overlay** mode and native system-audio capture.
 - Android app with an overlay mode, reading the system's media session.
 - More scenes.
 

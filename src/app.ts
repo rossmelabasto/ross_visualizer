@@ -1,10 +1,11 @@
 import { AudioEngine, SourceError, type SourceKind } from './audio/engine';
 import { emptyFeatures, idleFeatures, type AudioFeatures } from './audio/features';
+import { PcmAnalyser } from './audio/pcm';
 import { readTags } from './audio/tags';
-import { generateCover, loadImage, paletteFromImage, paletteHexes } from './color/cover';
+import { paletteHexes } from './color/cover';
 import { oklabToOklch } from './color/oklab';
-import { BRAND_PALETTE, lerpPalette, paletteFromHue, paletteToLinearRgb, type Palette } from './color/palette';
-import { Renderer, type FrameState, type Scene } from './gl/renderer';
+import { BRAND_PALETTE, type Palette } from './color/palette';
+import type { Renderer, Scene } from './gl/renderer';
 import { AsciiScene } from './scenes/ascii';
 import { FluidScene } from './scenes/fluid';
 import { GalaxyScene } from './scenes/galaxy';
@@ -13,6 +14,9 @@ import { KaleidoScene } from './scenes/kaleido';
 import { NebulaScene } from './scenes/nebula';
 import { TUNNEL_VERSIONS, TunnelScene } from './scenes/tunnel';
 import { lookupSong, searchSongs, spotifySearchUrl, type Track } from './search/itunes';
+import { artworkUrl, isDesktop, mediaControl, setOverlay, streamSystemAudio, watchNowPlaying, watchOverlay, type NowPlaying as SystemTrack } from './desktop/bridge';
+import { OVERLAY_MODES } from './overlay/modes';
+import { Stage } from './stage';
 import { detectLang, safeGet, safeSet, strings, type Lang, type Strings } from './ui/i18n';
 import { icons } from './ui/icons';
 
@@ -35,6 +39,7 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 
 export class App {
   private readonly engine = new AudioEngine();
+  private readonly stage: Stage;
   private readonly renderer: Renderer;
   private readonly scenes: Scene[];
   private readonly galaxy: GalaxyScene;
@@ -43,23 +48,7 @@ export class App {
   private prevScene: Scene | null = null;
   private transitionStart = 0;
 
-  private palette: Palette = BRAND_PALETTE;
-  private targetPalette: Palette = BRAND_PALETTE;
-  private paletteMode: 'cover' | 'audio' = 'cover';
-  private paletteTau = 0.8;
-  private hue = 2.2;
-  private brightness = 0.35;
-  private coverTex: WebGLTexture;
-  private coverPrevTex: WebGLTexture;
-  private coverMix = 1;
-  private coverToken = 0;
-
   private readonly idle = emptyFeatures();
-  private flow = 0;
-  private drift = 0;
-  private slowBass = 0;
-  private slowEnergy = 0;
-  private medBands: [number, number, number] = [0, 0, 0];
   private last = performance.now() / 1000;
   private frameEma = 1 / 60;
   private lastAdapt = 0;
@@ -83,16 +72,20 @@ export class App {
   private analysis: AudioFeatures | null = null;
   private beatLatch = false;
   private lastAnalysis = performance.now() / 1000;
+  // Desktop app only.
+  private player: SystemTrack | null = null;
+  private artKey: string | null = null;
+  private artBlob: string | null = null;
+  private overlayMode: string | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new Renderer(canvas);
+    this.stage = new Stage(canvas);
+    this.stage.onPalette = (p) => this.applyAccent(p);
+    this.renderer = this.stage.renderer;
     this.galaxy = new GalaxyScene();
     this.tunnel = new TunnelScene();
     this.scenes = [new FluidScene(), new NebulaScene(), this.galaxy, new AuroraScene(), new KaleidoScene(), this.tunnel, new AsciiScene()];
     this.scenes.forEach((s) => s.init(this.renderer));
-    this.coverTex = this.renderer.createImageTexture();
-    this.coverPrevTex = this.renderer.createImageTexture();
-    this.renderer.uploadImage(this.coverTex, generateCover(BRAND_PALETTE));
 
     const q = safeGet('rv_quality');
     this.quality = q === 'high' || q === 'low' ? q : 'auto';
@@ -103,7 +96,7 @@ export class App {
     const params = new URLSearchParams(location.search);
     const startScene = SCENE_IDS.indexOf((params.get('scene') ?? safeGet('rv_scene') ?? '') as SceneId);
     this.sceneIndex = startScene >= 0 ? startScene : 0;
-    const tv = TUNNEL_VERSIONS.indexOf((params.get('tunnel') ?? safeGet('rv_tunnel') ?? '') as (typeof TUNNEL_VERSIONS)[number]);
+    const tv = TUNNEL_VERSIONS.indexOf((params.get('tunnel') ?? '') as (typeof TUNNEL_VERSIONS)[number]);
     if (tv >= 0) this.tunnel.version = tv;
 
     this.resetPixelScale();
@@ -115,7 +108,8 @@ export class App {
     this.applyAccent(BRAND_PALETTE);
 
     const shared = params.get('t');
-    if (shared) this.loadShared(shared);
+    if (shared && !isDesktop) this.loadShared(shared);
+    if (isDesktop) this.startDesktop();
 
     // Audio analysis runs on its own clock: when frames get slow (busy phone, battery saver,
     // a window the compositor throttles) we still see every kick drum.
@@ -178,26 +172,6 @@ export class App {
       this.beatLatch = false;
     }
 
-    this.flow += dt * (0.35 + f.energy * 1.7 + f.beat * 0.35);
-    // Slow averages for scenes that should move calmly and only "breathe" with the music.
-    const k = 1 - Math.exp(-dt / 1.5);
-    this.slowBass += (f.bass - this.slowBass) * k;
-    this.slowEnergy += (f.energy - this.slowEnergy) * k;
-    this.drift += dt * (0.4 + this.slowEnergy * 1.3);
-    const km = 1 - Math.exp(-dt / 0.4);
-    this.medBands[0] += (f.bass - this.medBands[0]) * km;
-    this.medBands[1] += ((f.lowMid + f.mid) / 2 - this.medBands[1]) * km;
-    this.medBands[2] += (f.high - this.medBands[2]) * km;
-
-    if (this.paletteMode === 'audio') {
-      this.hue += dt * (0.02 + f.energy * 0.05) + (f.centroid - 0.5) * dt * 0.08;
-      if (f.onBeat && f.beatCount % 16 === 0) this.hue += 0.6;
-      this.targetPalette = paletteFromHue(this.hue);
-      this.paletteTau = 1.2;
-    }
-    this.palette = lerpPalette(this.palette, this.targetPalette, 1 - Math.exp(-dt / this.paletteTau));
-    this.coverMix = Math.min(1, this.coverMix + dt / 1.2);
-
     if (this.autoCycle && this.engine.kind !== 'none') {
       const enoughBeats = f.beatCount - this.lastCycleBeat >= 64 && f.onBeat;
       if (enoughBeats || now - this.lastCycle > 45) {
@@ -207,43 +181,16 @@ export class App {
       }
     }
 
-    const frame: FrameState = {
-      time: now,
-      dt,
-      flow: this.flow,
-      drift: this.drift,
-      slowBass: this.slowBass,
-      slowEnergy: this.slowEnergy,
-      medBands: this.medBands,
-      features: f,
-      palette: paletteToLinearRgb(this.palette),
-      brightness: this.brightness,
-      cover: { tex: this.coverTex, prev: this.coverPrevTex, mix: this.coverMix, has: true },
-      title: this.now ? `${this.now.title}${this.now.artist ? ` - ${this.now.artist}` : ''}` : '',
-      quality: this.pixelScale,
-      transparent: false,
-    };
-
-    const r = this.renderer;
-    r.uploadAudio(f);
+    const title = this.now ? `${this.now.title}${this.now.artist ? ` - ${this.now.artist}` : ''}` : '';
+    const frame = this.stage.step(f, now, dt, title, this.pixelScale);
     const scene = this.scenes[this.sceneIndex];
-    const a = r.target(`scene:${scene.id}`, r.width * scene.scale, r.height * scene.scale);
-    scene.render(r, frame, a);
-
-    let mix = 0;
-    let b = null;
+    let prev = null;
     if (this.prevScene) {
       const p = (now - this.transitionStart) / TRANSITION;
       if (p >= 1) this.prevScene = null;
-      else {
-        const ps = this.prevScene;
-        b = r.target(`scene:${ps.id}`, r.width * ps.scale, r.height * ps.scale);
-        ps.render(r, frame, b);
-        mix = 1 - p * p * (3 - 2 * p);
-      }
+      else prev = { scene: this.prevScene, mix: 1 - p * p * (3 - 2 * p), bloom: BLOOM[this.prevScene.id as SceneId] };
     }
-    const bloom = BLOOM[scene.id as SceneId] * (1 - mix) + (this.prevScene ? BLOOM[this.prevScene.id as SceneId] * mix : 0);
-    r.composite(a, b, mix, frame, { bloom });
+    this.stage.draw(frame, scene, BLOOM[scene.id as SceneId], prev);
 
     if (this.statsOn) this.renderStats(f);
   }
@@ -259,7 +206,7 @@ export class App {
       `beat   ${bar(f.beat)} #${f.beatCount}`,
       `bpm    ${f.bpm || '—'} (${Math.round(f.bpmConfidence * 100)}%)`,
       `fps    ${Math.round(1 / this.frameEma)} @ ${this.pixelScale.toFixed(2)}x`,
-      `colors ${paletteHexes(this.targetPalette).join(' ')}`,
+      `colors ${paletteHexes(this.stage.targetPalette).join(' ')}`,
     ].join('\n');
   }
 
@@ -272,66 +219,9 @@ export class App {
     this.sceneIndex = i;
     safeSet('rv_scene', SCENE_IDS[i]);
     document.querySelectorAll<HTMLButtonElement>('.scene-btn').forEach((b, k) => b.setAttribute('aria-selected', String(k === i)));
-    this.renderVariants();
-  }
-
-  private setTunnelVersion(v: number) {
-    const n = TUNNEL_VERSIONS.length;
-    this.tunnel.version = ((v % n) + n) % n;
-    safeSet('rv_tunnel', TUNNEL_VERSIONS[this.tunnel.version]);
-    this.renderVariants();
-  }
-
-  /** The tunnel's version picker, shown only while the tunnel is on screen. */
-  private renderVariants() {
-    const box = $('variants');
-    box.hidden = this.scenes[this.sceneIndex] !== this.tunnel;
-    if (box.hidden) return;
-    box.innerHTML = `<span>${this.t.tunnelVersion}</span>`;
-    TUNNEL_VERSIONS.forEach((v, i) => {
-      const b = document.createElement('button');
-      b.textContent = `${i + 1} · ${this.t.tunnelVersions[v]}`;
-      b.classList.toggle('on', i === this.tunnel.version);
-      b.addEventListener('click', () => this.setTunnelVersion(i));
-      box.appendChild(b);
-    });
   }
 
   // ---------------------------------------------------------------- color
-
-  private async setCover(src: string | null, fallbackSeed = 1) {
-    const token = ++this.coverToken;
-    let image: CanvasImageSource;
-    if (src) {
-      try {
-        const img = await loadImage(src);
-        if (token !== this.coverToken) return;
-        const { palette, brightness } = paletteFromImage(img);
-        this.paletteMode = 'cover';
-        this.targetPalette = palette;
-        this.paletteTau = 0.8;
-        this.brightness = brightness;
-        image = img;
-      } catch {
-        image = this.generated(fallbackSeed);
-      }
-    } else {
-      image = this.generated(fallbackSeed);
-    }
-    if (token !== this.coverToken) return;
-    // Keep what's on screen as "prev" and fade in the new one.
-    [this.coverPrevTex, this.coverTex] = [this.coverTex, this.coverPrevTex];
-    this.renderer.uploadImage(this.coverTex, image as TexImageSource);
-    this.coverMix = 0;
-    this.applyAccent(this.targetPalette);
-  }
-
-  private generated(seed: number) {
-    this.paletteMode = 'audio';
-    const p = paletteFromHue(this.hue);
-    this.targetPalette = p;
-    return generateCover(p, seed);
-  }
 
   /** The UI follows the artwork too. */
   private applyAccent(p: Palette) {
@@ -368,7 +258,7 @@ export class App {
     this.track = track;
     this.setNow({ title: track.title, artist: track.artist, art: track.artworkSmall, track });
     this.markActive();
-    this.setCover(track.artwork);
+    this.stage.setCover(track.artwork);
     try {
       await this.engine.playUrl(track.previewUrl);
       this.hideStart();
@@ -398,7 +288,7 @@ export class App {
       this.markActive();
       const label = this.t.listening[kind as 'mic' | 'system' | 'demo'];
       this.setNow({ title: label, artist: kind === 'demo' ? '120 BPM · A minor' : '' });
-      this.setCover(null, kind.length);
+      this.stage.setCover(null, kind.length);
       this.hideStart();
       this.updateSearchHint();
       if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
@@ -416,7 +306,7 @@ export class App {
     this.track = null;
     this.markActive();
     this.setNow({ title, artist: tags.artist ?? '', art });
-    this.setCover(art ?? null, title.length);
+    this.stage.setCover(art ?? null, title.length);
     try {
       await this.engine.playUrl(url);
       this.hideStart();
@@ -465,7 +355,7 @@ export class App {
       if (!track) return;
       this.results = [track];
       this.renderResults();
-      this.setCover(track.artwork);
+      this.stage.setCover(track.artwork);
       this.markActive(track.id);
       this.updateSearchHint();
     } catch {
@@ -499,7 +389,8 @@ export class App {
     $('t-autocycle').textContent = t.autoCycle;
     $('t-stats').textContent = t.showStats;
     $('btn-share').innerHTML = `${icons.share}<span>${t.share}</span>`;
-    $('t-keys').textContent = matchMedia('(pointer: coarse)').matches ? t.tapHint : t.keys;
+    $('t-keys').textContent = isDesktop ? t.desktopKeys : matchMedia('(pointer: coarse)').matches ? t.tapHint : t.keys;
+    $('t-overlay').textContent = t.overlay;
     $('t-madeby').textContent = t.madeBy;
     $('t-code').textContent = t.code;
     const tip = (id: string, label: string) => {
@@ -513,7 +404,7 @@ export class App {
     tip('settings-close', t.close);
     tip('start-close', t.close);
     this.renderSceneButtons();
-    this.renderVariants();
+    this.renderOverlayModes();
     this.updateSearchHint();
     this.updateDock();
     this.renderNowLinks();
@@ -536,6 +427,15 @@ export class App {
 
   private updateDock() {
     const kind = this.engine.kind;
+    if (kind === 'native') {
+      // The buttons drive whatever player the system reports (Spotify, a browser…).
+      const paused = this.player?.status !== 'Playing';
+      $('btn-play').hidden = !this.player;
+      $('btn-play').innerHTML = paused ? icons.play : icons.pause;
+      $('btn-play').setAttribute('aria-label', paused ? this.t.play : this.t.pause);
+      $('btn-next').hidden = !this.player;
+      return;
+    }
     const playable = kind === 'media' || kind === 'demo';
     const play = $('btn-play');
     play.hidden = !playable;
@@ -622,7 +522,7 @@ export class App {
       this.track = null;
       this.setNow({ title: r.title, artist: r.artist, art: r.artworkSmall, track: r });
       $('now-progress').hidden = true;
-      this.setCover(r.artwork);
+      this.stage.setCover(r.artwork);
       this.markActive(r.id);
       this.hideStart();
     } else {
@@ -704,7 +604,6 @@ export class App {
   private async share() {
     const url = new URL(location.origin + location.pathname);
     url.searchParams.set('scene', SCENE_IDS[this.sceneIndex]);
-    if (this.scenes[this.sceneIndex] === this.tunnel) url.searchParams.set('tunnel', TUNNEL_VERSIONS[this.tunnel.version]);
     const id = this.track?.id ?? this.now?.track?.id;
     if (id) url.searchParams.set('t', id);
     try {
@@ -739,8 +638,8 @@ export class App {
     document.addEventListener('fullscreenchange', () => this.updateFullscreenIcon());
     $('btn-source').addEventListener('click', () => ($('start').hidden ? this.showStart() : this.hideStart()));
     $('start-close').addEventListener('click', () => this.hideStart());
-    $('btn-play').addEventListener('click', () => this.engine.toggleMedia().then(() => this.updateDock()));
-    $('btn-next').addEventListener('click', () => this.next());
+    $('btn-play').addEventListener('click', () => this.togglePlay());
+    $('btn-next').addEventListener('click', () => (this.engine.kind === 'native' ? mediaControl('next') : this.next()));
 
     $('src-mic').addEventListener('click', () => this.useSource('mic'));
     $('src-demo').addEventListener('click', () => this.useSource('demo'));
@@ -808,11 +707,11 @@ export class App {
       else if (e.key === 'ArrowLeft') this.setScene(this.sceneIndex - 1);
       else if (e.key === 'f' || e.key === 'F') this.toggleFullscreen();
       else if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('idle');
-      else if ((e.key === 'v' || e.key === 'V') && this.scenes[this.sceneIndex] === this.tunnel) this.setTunnelVersion(this.tunnel.version + 1);
+      else if ((e.key === 'o' || e.key === 'O') && isDesktop) this.cycleOverlay();
       else if (e.key === ' ') {
         e.preventDefault();
-        this.engine.toggleMedia().then(() => this.updateDock());
-      } else if (e.key === '/') {
+        this.togglePlay();
+      } else if (e.key === '/' && !isDesktop) {
         e.preventDefault();
         this.showStart();
         search.focus();
@@ -821,7 +720,8 @@ export class App {
 
     // Pointer: any movement shows the UI; swipes on the canvas change scene.
     window.addEventListener('pointermove', (e) => {
-      if (e.pointerType === 'mouse') this.wake();
+      // Not just 'mouse': WebKitGTK (the desktop app) may report other types for a mouse.
+      if (e.pointerType !== 'touch') this.wake();
     });
     const canvas = this.renderer.canvas;
     let down: { x: number; y: number; t: number } | null = null;
@@ -845,5 +745,82 @@ export class App {
       }
     });
     canvas.addEventListener('dblclick', () => this.toggleFullscreen());
+  }
+
+  private togglePlay() {
+    if (this.engine.kind === 'native') mediaControl('play-pause');
+    else this.engine.toggleMedia().then(() => this.updateDock());
+  }
+
+  // ---------------------------------------------------------------- desktop app
+
+  /** Inside the desktop app: listen to everything the computer plays and follow its player. */
+  private async startDesktop() {
+    document.body.classList.add('desktop');
+    this.hideStart();
+    $('btn-source').hidden = true;
+    $('btn-share').hidden = true;
+    $('overlay-field').hidden = false;
+    const analyser = new PcmAnalyser(48000);
+    this.engine.useNative(analyser);
+    this.setNow({ title: this.t.listening.native, artist: '' });
+    this.stage.setCover(null, 3);
+    try {
+      await streamSystemAudio(analyser);
+      await watchNowPlaying((n) => this.onSystemTrack(n));
+      await watchOverlay((mode) => {
+        this.overlayMode = mode;
+        this.renderOverlayModes();
+      });
+    } catch (e) {
+      this.handleError(e);
+    }
+  }
+
+  private async onSystemTrack(n: SystemTrack | null) {
+    this.player = n;
+    this.updateDock();
+    if (!n?.title) {
+      this.setNow({ title: this.t.listening.native, artist: '' });
+      if (this.artKey !== null) this.stage.setCover(null, 3);
+      this.artKey = null;
+      return;
+    }
+    // Albums share one artwork: only reload (and repaint) when the artwork itself changes.
+    const key = n.art || `${n.title}\u0000${n.artist}`;
+    if (key === this.artKey) {
+      this.setNow({ title: n.title, artist: n.artist, art: this.artBlob ?? undefined });
+      return;
+    }
+    this.artKey = key;
+    const art = n.art ? await artworkUrl(n.art) : null;
+    if (this.artKey !== key) {
+      if (art) URL.revokeObjectURL(art);
+      return;
+    }
+    if (this.artBlob) URL.revokeObjectURL(this.artBlob);
+    this.artBlob = art;
+    this.setNow({ title: n.title, artist: n.artist, art: art ?? undefined });
+    this.stage.setCover(art, n.title.length);
+  }
+
+  private renderOverlayModes() {
+    if (!isDesktop) return;
+    const box = $('overlay-modes');
+    box.innerHTML = '';
+    const add = (mode: string | null, label: string) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.classList.toggle('on', mode === this.overlayMode);
+      b.addEventListener('click', () => setOverlay(mode));
+      box.appendChild(b);
+    };
+    add(null, this.t.overlayOff);
+    for (const m of OVERLAY_MODES) add(m, this.t.overlays[m]);
+  }
+
+  private cycleOverlay() {
+    const i = this.overlayMode ? OVERLAY_MODES.indexOf(this.overlayMode as (typeof OVERLAY_MODES)[number]) : -1;
+    setOverlay(i + 1 < OVERLAY_MODES.length ? OVERLAY_MODES[i + 1] : null);
   }
 }

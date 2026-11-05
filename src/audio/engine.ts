@@ -1,7 +1,9 @@
 import { FeatureExtractor, type AudioFeatures } from './features';
 import { DemoSynth } from './demoSynth';
+import type { PcmAnalyser } from './pcm';
 
-export type SourceKind = 'none' | 'media' | 'mic' | 'system' | 'demo';
+/** `native`: raw PCM from the desktop app (the whole system's audio), outside Web Audio. */
+export type SourceKind = 'none' | 'media' | 'mic' | 'system' | 'demo' | 'native';
 
 export class SourceError extends Error {
   constructor(
@@ -32,6 +34,7 @@ export class AudioEngine {
   private stream: MediaStream | null = null;
   private streamNode: MediaStreamAudioSourceNode | null = null;
   private synth: DemoSynth | null = null;
+  private native: { analyser: PcmAnalyser; fx: FeatureExtractor; freq: Float32Array; wave: Float32Array } | null = null;
   private listeners = new Map<string, Set<Listener>>();
   private sensitivity = 1;
 
@@ -77,6 +80,7 @@ export class AudioEngine {
   setSensitivity(v: number) {
     this.sensitivity = v;
     if (this.extractor) this.extractor.sensitivity = v;
+    if (this.native) this.native.fx.sensitivity = v;
   }
 
   setVolume(v: number) {
@@ -99,6 +103,7 @@ export class AudioEngine {
       this.synth.stop();
       this.synth = null;
     }
+    this.native = null;
     this.kind = 'none';
   }
 
@@ -204,8 +209,23 @@ export class AudioEngine {
     this.emit('source');
   }
 
+  /** Analyse samples pushed from outside (see PcmAnalyser). Needs no AudioContext. */
+  useNative(analyser: PcmAnalyser) {
+    this.stopCurrent();
+    const fx = new FeatureExtractor(analyser.sampleRate, analyser.fftSize, { sensitivity: this.sensitivity });
+    this.native = { analyser, fx, freq: new Float32Array(analyser.frequencyBinCount), wave: new Float32Array(analyser.fftSize) };
+    this.kind = 'native';
+    this.emit('source');
+  }
+
   /** Pull one analysis frame. Returns null when nothing is connected. */
   frame(dt: number, now: number): AudioFeatures | null {
+    if (this.native) {
+      const n = this.native;
+      n.analyser.getFloatFrequencyData(n.freq);
+      n.analyser.getFloatTimeDomainData(n.wave);
+      return n.fx.update(n.freq, n.wave, dt, now);
+    }
     if (!this.ctx || this.kind === 'none' || !this.extractor) return null;
     this.analyser.getFloatFrequencyData(this.freq);
     this.analyser.getFloatTimeDomainData(this.wave);

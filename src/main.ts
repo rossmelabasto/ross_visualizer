@@ -2,6 +2,7 @@ import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
 import './ui/styles.css';
 import { App } from './app';
+import { isDesktop } from './desktop/bridge';
 import { detectLang, strings } from './ui/i18n';
 
 const canvas = document.getElementById('gl') as HTMLCanvasElement;
@@ -15,6 +16,6 @@ try {
   document.getElementById('ui')!.hidden = true;
 }
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+if ('serviceWorker' in navigator && import.meta.env.PROD && !isDesktop) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
