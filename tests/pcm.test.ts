@@ -18,6 +18,14 @@ describe('PcmAnalyser', () => {
     expect(db[peak]).toBeLessThan(-11);
   });
 
+  it('turns garbage samples into silence instead of poisoning the spectrum', () => {
+    const a = new PcmAnalyser(SR);
+    a.push(new Float32Array([NaN, Infinity, -Infinity, 3e38, ...new Array(4092).fill(0.1)]));
+    const db = new Float32Array(a.frequencyBinCount);
+    a.getFloatFrequencyData(db);
+    expect(db.every((v) => !Number.isNaN(v))).toBe(true);
+  });
+
   it('feeds the beat detector well enough to find 120 BPM in raw PCM', () => {
     const a = new PcmAnalyser(SR);
     const fx = new FeatureExtractor(SR, a.fftSize);

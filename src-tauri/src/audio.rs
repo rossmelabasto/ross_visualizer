@@ -50,6 +50,8 @@ impl Capture {
 fn spawn() -> std::io::Result<Child> {
     crate::child_command("pw-record")
         .args([
+            // Without --raw, pw-record writes an AU file: a header and big-endian samples.
+            "--raw",
             "-P",
             "{ stream.capture.sink=true node.name=ross-visualizer media.name=ross_visualizer }",
             "--format",
@@ -80,7 +82,20 @@ fn run(shared: Arc<Mutex<Inner>>) {
         let mut out = child.stdout.take().expect("piped stdout");
         shared.lock().unwrap().child = Some(child);
 
+        let debug = std::env::var_os("RV_DEBUG").is_some();
+        let (mut sum, mut count) = (0f64, 0usize);
         while out.read_exact(&mut buf).is_ok() {
+            if debug {
+                for s in buf.chunks_exact(4) {
+                    let v = f32::from_ne_bytes([s[0], s[1], s[2], s[3]]) as f64;
+                    sum += v * v;
+                }
+                count += CHUNK_SAMPLES;
+                if count >= 48_000 {
+                    eprintln!("ross-visualizer: audio rms {:.3}", (sum / count as f64).sqrt());
+                    (sum, count) = (0.0, 0);
+                }
+            }
             let mut inner = shared.lock().unwrap();
             inner.listeners.retain(|(_, ch)| ch.send(InvokeResponseBody::Raw(buf.clone())).is_ok());
             if inner.listeners.is_empty() {

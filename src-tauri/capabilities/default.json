@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "The main window and the overlay: events and the app's own commands.",
   "windows": ["main", "overlay"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "core:window:allow-set-fullscreen", "core:window:allow-is-fullscreen"]
 }

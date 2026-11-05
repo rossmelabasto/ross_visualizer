@@ -14,7 +14,17 @@ import { KaleidoScene } from './scenes/kaleido';
 import { NebulaScene } from './scenes/nebula';
 import { TUNNEL_VERSIONS, TunnelScene } from './scenes/tunnel';
 import { lookupSong, searchSongs, spotifySearchUrl, type Track } from './search/itunes';
-import { artworkUrl, isDesktop, mediaControl, setOverlay, streamSystemAudio, watchNowPlaying, watchOverlay, type NowPlaying as SystemTrack } from './desktop/bridge';
+import {
+  artworkUrl,
+  isDesktop,
+  mediaControl,
+  setOverlay,
+  streamSystemAudio,
+  toggleWindowFullscreen,
+  watchNowPlaying,
+  watchOverlay,
+  type NowPlaying as SystemTrack,
+} from './desktop/bridge';
 import { OVERLAY_MODES } from './overlay/modes';
 import { Stage } from './stage';
 import { detectLang, safeGet, safeSet, strings, type Lang, type Strings } from './ui/i18n';
@@ -77,6 +87,7 @@ export class App {
   private artKey: string | null = null;
   private artBlob: string | null = null;
   private overlayMode: string | null = null;
+  private windowFullscreen = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.stage = new Stage(canvas);
@@ -589,6 +600,11 @@ export class App {
   }
 
   private async toggleFullscreen() {
+    if (isDesktop) {
+      this.windowFullscreen = await toggleWindowFullscreen();
+      this.updateFullscreenIcon();
+      return;
+    }
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
@@ -598,7 +614,8 @@ export class App {
   }
 
   private updateFullscreenIcon() {
-    $('btn-fullscreen').innerHTML = document.fullscreenElement ? icons.shrink : icons.expand;
+    const full = isDesktop ? this.windowFullscreen : !!document.fullscreenElement;
+    $('btn-fullscreen').innerHTML = full ? icons.shrink : icons.expand;
   }
 
   private async share() {
@@ -696,6 +713,7 @@ export class App {
       const typing = e.target instanceof HTMLInputElement && e.target.type !== 'checkbox' && e.target.type !== 'range';
       if (e.key === 'Escape') {
         if (!$('settings').hidden) this.toggleSettings(false);
+        else if (isDesktop && this.windowFullscreen) this.toggleFullscreen();
         else if (!$('start').hidden && this.engine.kind !== 'none') this.hideStart();
         (document.activeElement as HTMLElement | null)?.blur();
         return;

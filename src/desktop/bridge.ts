@@ -59,6 +59,15 @@ export async function setOverlay(mode: string | null) {
   await invoke('set_overlay', { mode });
 }
 
+/** In the app the page's Fullscreen API isn't wired to the window: ask the window itself. */
+export async function toggleWindowFullscreen(): Promise<boolean> {
+  const { getCurrentWindow } = await import('@tauri-apps/api/window');
+  const win = getCurrentWindow();
+  const next = !(await win.isFullscreen());
+  await win.setFullscreen(next);
+  return next;
+}
+
 export async function watchOverlay(cb: (mode: string | null) => void) {
   const { invoke } = await core();
   const { listen } = await events();

@@ -45,11 +45,12 @@ export class PcmAnalyser {
     }
   }
 
-  /** Append new samples (mono, -1..1). */
+  /** Append new samples (mono, -1..1). Anything that isn't a sane sample becomes silence. */
   push(samples: Float32Array) {
     const n = this.fftSize;
     for (let i = 0; i < samples.length; i++) {
-      this.ring[this.writeAt] = samples[i];
+      const v = samples[i];
+      this.ring[this.writeAt] = Number.isFinite(v) ? Math.max(-1, Math.min(1, v)) : 0;
       this.writeAt = (this.writeAt + 1) % n;
     }
   }
