@@ -26,9 +26,8 @@ case $kind in
   arch)
     pacman-key --init >/dev/null 2>&1
     pacman -Syu --noconfirm --needed curl xorg-server-xvfb xorg-xauth dbus >/dev/null
-    curl -fsSL "$url/key.asc" -o /tmp/key.asc
-    pacman-key --add /tmp/key.asc >/dev/null 2>&1
-    fingerprint=$(gpg --show-keys --with-colons /tmp/key.asc | awk -F: '/^fpr/ {print $10; exit}')
+    curl -fsSL "$url/key.asc" | pacman-key --add - >/dev/null 2>&1
+    fingerprint=$(curl -fsSL "$url/key.asc" | gpg --show-keys --with-colons | awk -F: '/^fpr/ {print $10; exit}')
     pacman-key --lsign-key "$fingerprint" >/dev/null 2>&1
     printf '\n[ross]\nServer = %s/arch/x86_64\n' "$url" >> /etc/pacman.conf
     pacman -Sy --noconfirm ross-visualizer-bin >/dev/null

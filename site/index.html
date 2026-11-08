@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ross_visualizer para Linux</title>
+<meta name="description" content="Visualizador de música para Linux que escucha lo que suena en tu compu y pinta con la portada del disco. Versión alfa.">
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="tag"><span class="pill">alfa</span> versión @VERSION@ · solo Linux por ahora</p>
+    <h1>ross_visualizer</h1>
+    <p class="lead">Escucha todo lo que suena en tu compu y lo pinta con la portada del disco. En pantalla completa o como overlay encima de tus ventanas, sin elegir fuente de audio y sin iniciar sesión.</p>
+    <nav class="actions">
+      <a class="btn primary" href="#instalar">Instalar</a>
+      <a class="btn" href="#comprobar">¿Va a funcionar en mi compu?</a>
+      <a class="btn" href="https://visualizer.rossmel.com">Probar la demo web</a>
+    </nav>
+  </div>
+  <div class="shots" aria-hidden="true">
+    <img src="shots/galaxy.jpg" alt="" loading="lazy">
+    <img src="shots/aurora.jpg" alt="" loading="lazy">
+    <img src="shots/kaleido.jpg" alt="" loading="lazy">
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="note">
+    <h2>Esto es una alfa</h2>
+    <p>Está para que la pruebes y me cuentes qué onda. Puede fallar, y justo eso es lo que quiero saber: si algo se ve raro, abre un <a href="https://github.com/rossmelabasto/ross_visualizer/issues">issue</a> o escríbeme.</p>
+  </section>
+
+  <section id="comprobar">
+    <h2>¿Va a funcionar en mi compu?</h2>
+    <p>Este comando revisa tu sistema y te dice qué funciones van a andar. Solo lee: no instala nada, no pide contraseña y no envía datos a ningún lado. Córrelo desde una terminal de tu escritorio.</p>
+    <div class="code"><pre><code>curl -fsSL https://ros.rossmel.com/check.sh | bash</code></pre><button class="copy" type="button">Copiar</button></div>
+    <p class="small">¿Prefieres leerlo antes? Está <a href="https://github.com/rossmelabasto/ross_visualizer/blob/main/scripts/check.sh">en GitHub</a>. Si algo sale mal, la salida se puede pegar tal cual en un issue.</p>
+  </section>
+
+  <section id="instalar">
+    <h2>Instalar</h2>
+    <p>Agregas el repositorio una vez y las actualizaciones te llegan junto con las del resto de tu sistema.</p>
+
+    <div class="tabs" role="tablist" aria-label="Distribución">
+      <button role="tab" type="button" aria-selected="true" aria-controls="t-arch" id="b-arch">CachyOS / Arch</button>
+      <button role="tab" type="button" aria-selected="false" aria-controls="t-aur" id="b-aur">AUR</button>
+      <button role="tab" type="button" aria-selected="false" aria-controls="t-deb" id="b-deb">Ubuntu / Debian</button>
+      <button role="tab" type="button" aria-selected="false" aria-controls="t-rpm" id="b-rpm">Fedora</button>
+      <button role="tab" type="button" aria-selected="false" aria-controls="t-app" id="b-app">AppImage</button>
+    </div>
+
+    <div class="panel" role="tabpanel" id="t-arch" aria-labelledby="b-arch">
+      <h3>Agregar el repositorio e instalar</h3>
+      <div class="code"><pre><code>curl -fsSL https://ros.rossmel.com/key.asc | sudo pacman-key --add -
+sudo pacman-key --lsign-key C08F57FCE06B95B52145012C274187B9D5E9FFEB
+printf '\n[ross]\nServer = https://ros.rossmel.com/arch/x86_64\n' | sudo tee -a /etc/pacman.conf
+sudo pacman -Syu ross-visualizer-bin</code></pre><button class="copy" type="button">Copiar</button></div>
+      <h3>Actualizar</h3>
+      <div class="code"><pre><code>sudo pacman -Syu</code></pre><button class="copy" type="button">Copiar</button></div>
+      <h3>Desinstalar</h3>
+      <div class="code"><pre><code>sudo pacman -Rns ross-visualizer-bin</code></pre><button class="copy" type="button">Copiar</button></div>
+      <p class="small">Si ya no lo quieres, borra también el bloque <code>[ross]</code> de <code>/etc/pacman.conf</code>.</p>
+    </div>
+
+    <div class="panel" role="tabpanel" id="t-aur" aria-labelledby="b-aur" hidden>
+      <h3>Instalar con tu ayudante de AUR</h3>
+      <div class="code"><pre><code>paru -S ross-visualizer-bin</code></pre><button class="copy" type="button">Copiar</button></div>
+      <p class="small">Con yay es igual: <code>yay -S ross-visualizer-bin</code>. Se actualiza cuando actualizas los paquetes de AUR.</p>
+      <h3>Desinstalar</h3>
+      <div class="code"><pre><code>sudo pacman -Rns ross-visualizer-bin</code></pre><button class="copy" type="button">Copiar</button></div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="t-deb" aria-labelledby="b-deb" hidden>
+      <h3>Agregar el repositorio e instalar</h3>
+      <div class="code"><pre><code>curl -fsSL https://ros.rossmel.com/key.asc | sudo gpg --dearmor -o /usr/share/keyrings/ross.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ross.gpg] https://ros.rossmel.com/apt stable main" | sudo tee /etc/apt/sources.list.d/ross.list
+sudo apt update
+sudo apt install ross-visualizer</code></pre><button class="copy" type="button">Copiar</button></div>
+      <h3>Actualizar</h3>
+      <div class="code"><pre><code>sudo apt update &amp;&amp; sudo apt upgrade</code></pre><button class="copy" type="button">Copiar</button></div>
+      <h3>Desinstalar</h3>
+      <div class="code"><pre><code>sudo apt remove ross-visualizer
+sudo rm /etc/apt/sources.list.d/ross.list /usr/share/keyrings/ross.gpg</code></pre><button class="copy" type="button">Copiar</button></div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="t-rpm" aria-labelledby="b-rpm" hidden>
+      <h3>Agregar el repositorio e instalar</h3>
+      <div class="code"><pre><code>sudo curl -fsSL https://ros.rossmel.com/rpm/ross.repo -o /etc/yum.repos.d/ross.repo
+sudo dnf install ross-visualizer</code></pre><button class="copy" type="button">Copiar</button></div>
+      <p class="small">La primera vez dnf te pregunta si confías en la clave. Su huella es <code>C08F 57FC E06B 95B5 2145 012C 2741 87B9 D5E9 FFEB</code>.</p>
+      <h3>Actualizar</h3>
+      <div class="code"><pre><code>sudo dnf upgrade</code></pre><button class="copy" type="button">Copiar</button></div>
+      <h3>Desinstalar</h3>
+      <div class="code"><pre><code>sudo dnf remove ross-visualizer
+sudo rm /etc/yum.repos.d/ross.repo</code></pre><button class="copy" type="button">Copiar</button></div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="t-app" aria-labelledby="b-app" hidden>
+      <h3>Sin instalar nada</h3>
+      <p>Descarga el AppImage de la <a href="https://github.com/rossmelabasto/ross_visualizer/releases/tag/v@VERSION@">versión @VERSION@</a>, hazlo ejecutable y ábrelo. Sirve para cualquier distro, pero no se actualiza solo y tu sistema igual necesita <code>pipewire</code> y <code>playerctl</code>.</p>
+      <div class="code"><pre><code>chmod +x ross_visualizer_@VERSION@_amd64.AppImage
+./ross_visualizer_@VERSION@_amd64.AppImage</code></pre><button class="copy" type="button">Copiar</button></div>
+    </div>
+  </section>
+
+  <section id="requisitos">
+    <h2>Requisitos</h2>
+    <p>Las dependencias se instalan solas con cualquiera de los repositorios. Lo único que depende de tu sistema es esto:</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Función</th><th>Qué necesita</th></tr></thead>
+        <tbody>
+          <tr><td>La app y las escenas</td><td>Linux x86_64 con glibc 2.35 o más nueva y una GPU con WebGL2</td></tr>
+          <tr><td>Reaccionar a la música</td><td>PipeWire corriendo. PulseAudio solo no alcanza</td></tr>
+          <tr><td>Canción, portada y controles</td><td>Un reproductor con MPRIS: Spotify, un navegador y casi todos los de Linux</td></tr>
+          <tr><td>Overlay sobre las ventanas</td><td>Wayland con layer-shell: KDE Plasma, Hyprland, Sway, niri y otros. En GNOME o X11 tienes la pantalla completa, sin overlay</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="paquetes">
+    <h2>Paquetes disponibles</h2>
+    <div class="table">
+      <table>
+        <thead><tr><th>Formato</th><th>Para</th><th>Paquete</th><th>Se actualiza</th></tr></thead>
+        <tbody>
+          <tr><td>Repositorio pacman</td><td>CachyOS, Arch, EndeavourOS, Manjaro</td><td><code>ross-visualizer-bin</code></td><td>Con pacman</td></tr>
+          <tr><td>AUR</td><td>CachyOS, Arch y derivadas</td><td><code>ross-visualizer-bin</code></td><td>Con tu ayudante de AUR</td></tr>
+          <tr><td>Repositorio APT</td><td>Ubuntu 22.04 o más nueva, Debian 13, Linux Mint, Pop!_OS</td><td><code>ross-visualizer</code></td><td>Con apt</td></tr>
+          <tr><td>Repositorio DNF</td><td>Fedora</td><td><code>ross-visualizer</code></td><td>Con dnf</td></tr>
+          <tr><td>AppImage</td><td>Cualquier distro x86_64</td><td>Descarga directa</td><td>A mano</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small">Cada versión se instala y se abre en sistemas limpios de CachyOS, Arch, Ubuntu 22.04 y 24.04, Debian 13 y Fedora antes de publicarse. Esas pruebas corren sin audio real ni escritorio de verdad: esa parte la estás probando tú.</p>
+  </section>
+
+  <section id="cambios">
+    <h2>Cambios</h2>
+    <div class="changelog">
+@CHANGELOG@
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p><a href="https://github.com/rossmelabasto/ross_visualizer">Código en GitHub</a> · <a href="https://github.com/rossmelabasto/ross_visualizer/issues">Reportar un problema</a> · <a href="https://visualizer.rossmel.com">Demo web</a></p>
+</footer>
+<script src="site.js"></script>
+</body>
+</html>

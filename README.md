@@ -22,6 +22,16 @@
 - Works on phones: swipe to change scene, installable as a PWA, keeps the screen awake.
 - **Desktop app (Linux)** that listens to everything the computer plays, follows the player that's on (Spotify, a browser…) for the artwork, and adds a click-through **overlay** above every window.
 
+## Install on Linux
+
+The desktop app is an **alpha**. Check what will work on your system without installing anything:
+
+```sh
+curl -fsSL https://ros.rossmel.com/check.sh | bash
+```
+
+There are signed repositories for pacman (CachyOS, Arch), APT (Ubuntu, Debian) and DNF (Fedora), plus AUR (`ross-visualizer-bin`) and an AppImage. The commands, requirements and packages are at **[ros.rossmel.com](https://ros.rossmel.com)** and in the [install guide](docs/INSTALL.md); what changed in each version is in the [changelog](CHANGELOG.md).
+
 ## Desktop app
 
 The same visualizer in a [Tauri](https://tauri.app) app (`src-tauri/`). There's no source to pick: it hears the whole system and paints with the artwork of whatever is playing.

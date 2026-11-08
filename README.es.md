@@ -14,6 +14,16 @@
 - Funciona en el celular: deslizas para cambiar de escena, se instala como PWA y no deja que la pantalla se apague.
 - **App de escritorio (Linux)** que escucha todo lo que suena en la PC, sigue al reproductor que está sonando (Spotify, un navegador…) para tomar la portada y suma un **overlay** encima de todas las ventanas que deja pasar los clics.
 
+## Instalar en Linux
+
+La app de escritorio está en **alfa**. Mira qué va a funcionar en tu sistema sin instalar nada:
+
+```sh
+curl -fsSL https://ros.rossmel.com/check.sh | bash
+```
+
+Hay repositorios firmados para pacman (CachyOS, Arch), APT (Ubuntu, Debian) y DNF (Fedora), además de AUR (`ross-visualizer-bin`) y un AppImage. Los comandos, requisitos y paquetes están en **[ros.rossmel.com](https://ros.rossmel.com)** y en la [guía de instalación](docs/INSTALL.es.md); lo que cambia en cada versión está en el [registro de cambios](CHANGELOG.es.md).
+
 ## App de escritorio
 
 El mismo visualizer en una app de [Tauri](https://tauri.app) (`src-tauri/`). No hay que elegir fuente: escucha todo el sistema y pinta con la portada de lo que esté sonando.
