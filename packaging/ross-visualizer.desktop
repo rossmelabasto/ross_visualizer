@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=ross_visualizer
+Comment=Music visualizer with a desktop overlay
+Exec=ross-visualizer
+Icon=ross-visualizer
+Categories=AudioVideo;Audio;
+StartupWMClass=ross-visualizer
