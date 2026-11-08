@@ -20,7 +20,7 @@ pub fn build(app: &App) -> tauri::Result<()> {
     for (id, label) in MODES {
         checks.push((Some(id), CheckMenuItem::with_id(app, format!("overlay:{id}"), label, true, false, None::<&str>)?));
     }
-    let overlay = Submenu::with_id(app, "overlay", "Overlay", true)?;
+    let overlay = Submenu::with_id(app, "overlay", "Overlay", crate::overlay::supported(app.handle()))?;
     for (i, (_, item)) in checks.iter().enumerate() {
         overlay.append(item)?;
         if i == 0 {

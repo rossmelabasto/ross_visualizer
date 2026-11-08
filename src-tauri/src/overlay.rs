@@ -32,6 +32,8 @@ pub struct State {
     /// Where the overlay takes the pointer (x, y, width, height in window pixels); usually
     /// nowhere. Orbit asks for its bubble, to notice the mouse and fade out of the way.
     input: Mutex<Vec<[i32; 4]>>,
+    /// False on sessions without layer-shell (GNOME, X11): there the overlay stays off.
+    supported: Mutex<bool>,
 }
 
 impl Default for State {
@@ -42,6 +44,7 @@ impl Default for State {
             was_on: Mutex::new(false),
             options: Mutex::new(json!({})),
             input: Mutex::new(Vec::new()),
+            supported: Mutex::new(true),
         }
     }
 }
@@ -52,6 +55,10 @@ fn settings_file(app: &AppHandle) -> Option<std::path::PathBuf> {
 
 /// Read the saved style and settings (at startup).
 pub fn load(app: &AppHandle) {
+    #[cfg(target_os = "linux")]
+    {
+        *app.state::<State>().supported.lock().unwrap() = gtk_layer_shell::is_supported();
+    }
     let Some(saved) = settings_file(app).and_then(|f| std::fs::read(f).ok()).and_then(|b| serde_json::from_slice::<Value>(&b).ok()) else {
         return;
     };
@@ -72,6 +79,10 @@ pub fn restore(app: &AppHandle) {
     if on && current(app).is_none() {
         set(app, Some(last));
     }
+}
+
+pub fn supported(app: &AppHandle) -> bool {
+    *app.state::<State>().supported.lock().unwrap()
 }
 
 fn save(app: &AppHandle) {
@@ -100,6 +111,10 @@ pub fn current(app: &AppHandle) -> Option<&'static str> {
 /// Show the overlay with a style, or close it with `None`.
 pub fn set(app: &AppHandle, mode: Option<&str>) {
     let mode = mode.and_then(find);
+    if mode.is_some() && !supported(app) {
+        eprintln!("ross-visualizer: this session has no layer-shell, so the overlay is unavailable");
+        return;
+    }
     let state = app.state::<State>();
     *state.mode.lock().unwrap() = mode;
     if let Some(m) = mode {
@@ -239,6 +254,11 @@ pub fn set_overlay_options(app: AppHandle, options: Value) {
 #[tauri::command]
 pub fn set_overlay(app: AppHandle, mode: Option<String>) {
     set(&app, mode.as_deref());
+}
+
+#[tauri::command]
+pub fn overlay_supported(app: AppHandle) -> bool {
+    supported(&app)
 }
 
 #[tauri::command]

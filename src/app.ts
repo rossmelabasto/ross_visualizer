@@ -23,6 +23,7 @@ import {
   streamSystemAudio,
   toggleWindowFullscreen,
   watchNowPlaying,
+  overlaySupported,
   watchOverlay,
   watchOverlayOptions,
   type NowPlaying as SystemTrack,
@@ -781,12 +782,12 @@ export class App {
     this.hideStart();
     $('btn-source').hidden = true;
     $('btn-share').hidden = true;
-    $('overlay-field').hidden = false;
     const analyser = new PcmAnalyser(48000);
     this.engine.useNative(analyser);
     this.setNow({ title: this.t.listening.native, artist: '' });
     this.stage.setCover(null, 3);
     try {
+      $('overlay-field').hidden = !(await overlaySupported());
       await streamSystemAudio(analyser);
       await watchNowPlaying((n) => this.onSystemTrack(n));
       await watchOverlayOptions((o) => {

@@ -69,6 +69,12 @@ export async function toggleWindowFullscreen(): Promise<boolean> {
   return next;
 }
 
+/** False on sessions without layer-shell (GNOME, X11), where there's no overlay to offer. */
+export async function overlaySupported() {
+  const { invoke } = await core();
+  return invoke<boolean>('overlay_supported');
+}
+
 export async function watchOverlay(cb: (mode: string | null) => void) {
   const { invoke } = await core();
   const { listen } = await events();

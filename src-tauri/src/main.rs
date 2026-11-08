@@ -95,6 +95,7 @@ fn main() {
             media::media_control,
             overlay::set_overlay,
             overlay::overlay_mode,
+            overlay::overlay_supported,
             overlay::overlay_options,
             overlay::set_overlay_options,
             overlay::overlay_input,
