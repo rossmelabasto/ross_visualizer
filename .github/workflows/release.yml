@@ -185,7 +185,7 @@ jobs:
       - name: Run the AppImage
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xauth dbus
+          sudo apt-get install -y xvfb xauth dbus libegl1 libgl1-mesa-dri
           chmod +x packages/*.AppImage
           bash scripts/release/smoke.sh "$PWD"/packages/*.AppImage --appimage-extract-and-run
 
