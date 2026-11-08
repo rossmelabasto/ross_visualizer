@@ -28,7 +28,7 @@ Todas las dependencias vienen con el paquete. Solo esto depende de tu sistema:
 | Formato | Para | Paquete | Se actualiza |
 | --- | --- | --- | --- |
 | Repositorio pacman | CachyOS, Arch, EndeavourOS, Manjaro | `ross-visualizer-bin` | Con pacman |
-| AUR | CachyOS, Arch y derivadas | `ross-visualizer-bin` | Con tu ayudante de AUR |
+| AUR | CachyOS, Arch y derivadas | `ross-visualizer-bin` | Próximamente |
 | Repositorio APT | Ubuntu 22.04 o más nueva, Debian 13, Linux Mint, Pop!_OS | `ross-visualizer` | Con apt |
 | Repositorio DNF | Fedora | `ross-visualizer` | Con dnf |
 | AppImage | Cualquier distro x86_64 | Descarga directa | A mano |
@@ -43,12 +43,6 @@ sudo pacman -Syu ross-visualizer-bin
 ```
 
 Se actualiza con `sudo pacman -Syu`. Para quitarlo, corre `sudo pacman -Rns ross-visualizer-bin` y borra el bloque `[ross]` de `/etc/pacman.conf`.
-
-## AUR
-
-```sh
-paru -S ross-visualizer-bin   # o: yay -S ross-visualizer-bin
-```
 
 ## Ubuntu y Debian
 

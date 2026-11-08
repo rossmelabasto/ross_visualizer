@@ -46,7 +46,6 @@
 
     <div class="tabs" role="tablist" aria-label="Distribución">
       <button role="tab" type="button" aria-selected="true" aria-controls="t-arch" id="b-arch">CachyOS / Arch</button>
-      <button role="tab" type="button" aria-selected="false" aria-controls="t-aur" id="b-aur">AUR</button>
       <button role="tab" type="button" aria-selected="false" aria-controls="t-deb" id="b-deb">Ubuntu / Debian</button>
       <button role="tab" type="button" aria-selected="false" aria-controls="t-rpm" id="b-rpm">Fedora</button>
       <button role="tab" type="button" aria-selected="false" aria-controls="t-app" id="b-app">AppImage</button>
@@ -63,14 +62,6 @@ sudo pacman -Syu ross-visualizer-bin</code></pre><button class="copy" type="butt
       <h3>Desinstalar</h3>
       <div class="code"><pre><code>sudo pacman -Rns ross-visualizer-bin</code></pre><button class="copy" type="button">Copiar</button></div>
       <p class="small">Si ya no lo quieres, borra también el bloque <code>[ross]</code> de <code>/etc/pacman.conf</code>.</p>
-    </div>
-
-    <div class="panel" role="tabpanel" id="t-aur" aria-labelledby="b-aur" hidden>
-      <h3>Instalar con tu ayudante de AUR</h3>
-      <div class="code"><pre><code>paru -S ross-visualizer-bin</code></pre><button class="copy" type="button">Copiar</button></div>
-      <p class="small">Con yay es igual: <code>yay -S ross-visualizer-bin</code>. Se actualiza cuando actualizas los paquetes de AUR.</p>
-      <h3>Desinstalar</h3>
-      <div class="code"><pre><code>sudo pacman -Rns ross-visualizer-bin</code></pre><button class="copy" type="button">Copiar</button></div>
     </div>
 
     <div class="panel" role="tabpanel" id="t-deb" aria-labelledby="b-deb" hidden>
@@ -129,7 +120,7 @@ sudo rm /etc/yum.repos.d/ross.repo</code></pre><button class="copy" type="button
         <thead><tr><th>Formato</th><th>Para</th><th>Paquete</th><th>Se actualiza</th></tr></thead>
         <tbody>
           <tr><td>Repositorio pacman</td><td>CachyOS, Arch, EndeavourOS, Manjaro</td><td><code>ross-visualizer-bin</code></td><td>Con pacman</td></tr>
-          <tr><td>AUR</td><td>CachyOS, Arch y derivadas</td><td><code>ross-visualizer-bin</code></td><td>Con tu ayudante de AUR</td></tr>
+          <tr><td>AUR</td><td>CachyOS, Arch y derivadas</td><td><code>ross-visualizer-bin</code></td><td>Próximamente</td></tr>
           <tr><td>Repositorio APT</td><td>Ubuntu 22.04 o más nueva, Debian 13, Linux Mint, Pop!_OS</td><td><code>ross-visualizer</code></td><td>Con apt</td></tr>
           <tr><td>Repositorio DNF</td><td>Fedora</td><td><code>ross-visualizer</code></td><td>Con dnf</td></tr>
           <tr><td>AppImage</td><td>Cualquier distro x86_64</td><td>Descarga directa</td><td>A mano</td></tr>

@@ -28,7 +28,7 @@ Every dependency comes with the package. Only these depend on your system:
 | Format | For | Package | Updates |
 | --- | --- | --- | --- |
 | pacman repository | CachyOS, Arch, EndeavourOS, Manjaro | `ross-visualizer-bin` | With pacman |
-| AUR | CachyOS, Arch and derivatives | `ross-visualizer-bin` | With your AUR helper |
+| AUR | CachyOS, Arch and derivatives | `ross-visualizer-bin` | Coming soon |
 | APT repository | Ubuntu 22.04 or newer, Debian 13, Linux Mint, Pop!_OS | `ross-visualizer` | With apt |
 | DNF repository | Fedora | `ross-visualizer` | With dnf |
 | AppImage | Any x86_64 distro | Direct download | By hand |
@@ -43,12 +43,6 @@ sudo pacman -Syu ross-visualizer-bin
 ```
 
 Update with `sudo pacman -Syu`. To remove it, run `sudo pacman -Rns ross-visualizer-bin` and delete the `[ross]` block from `/etc/pacman.conf`.
-
-## AUR
-
-```sh
-paru -S ross-visualizer-bin   # or: yay -S ross-visualizer-bin
-```
 
 ## Ubuntu and Debian
 

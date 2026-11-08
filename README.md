@@ -30,7 +30,7 @@ The desktop app is an **alpha**. Check what will work on your system without ins
 curl -fsSL https://ros.rossmel.com/check.sh | bash
 ```
 
-There are signed repositories for pacman (CachyOS, Arch), APT (Ubuntu, Debian) and DNF (Fedora), plus AUR (`ross-visualizer-bin`) and an AppImage. The commands, requirements and packages are at **[ros.rossmel.com](https://ros.rossmel.com)** and in the [install guide](docs/INSTALL.md); what changed in each version is in the [changelog](CHANGELOG.md).
+There are signed repositories for pacman (CachyOS, Arch), APT (Ubuntu, Debian) and DNF (Fedora), plus an AppImage. AUR is coming soon. The commands, requirements and packages are at **[ros.rossmel.com](https://ros.rossmel.com)** and in the [install guide](docs/INSTALL.md); what changed in each version is in the [changelog](CHANGELOG.md).
 
 ## Desktop app
 

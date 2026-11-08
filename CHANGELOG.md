@@ -13,7 +13,7 @@ First alpha of the Linux desktop app, for friends to try.
 - Every scene from the web in full screen.
 - Click-through overlay above every window, in seven styles with their own settings: Halo, Horizon, Orbit, Curtain, Embers, rOS rain and Wave.
 - Commands for key bindings: `ross-visualizer overlay toggle|off|next|prev|<style>`.
-- Packages: pacman repository, AUR, APT repository, DNF repository and AppImage.
+- Packages: pacman repository, APT repository, DNF repository and AppImage.
 - Compatibility check that says what will work on your system before you install anything.
 
 ### Known limits

@@ -68,7 +68,7 @@ else
 fi
 
 case $family in
-  arch)  ok 'Familia Arch: se instala con pacman o desde AUR' ;;
+  arch)  ok 'Familia Arch: se instala con pacman' ;;
   deb)   ok 'Familia Debian/Ubuntu: se instala con apt' ;;
   rpm)   ok 'Familia Fedora: se instala con dnf' ;;
   other) warn "Distro \"$distro_id\" sin repo propio: usa el AppImage" ;;
