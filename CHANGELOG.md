@@ -6,6 +6,7 @@ Everything before 1.0 is an alpha: expect rough edges and tell me about them in 
 
 ### New
 
+- Audio source in Settings. "Everything that plays" now also hears apps playing on another output: before, with Discord on a headset and Spotify on the speakers, only Discord came through. Or pick a single app so voices on a call don't move the scenes.
 - A welcome tour the first time you open the app: what it does, the scenes, the overlay and keyboard shortcuts for your desktop (niri, Hyprland, Sway or KDE), ready to copy. Settings opens it again.
 - A button on the bottom bar to go back to the previous song.
 - The rOS scene shows your user and your computer's name in its prompt.
@@ -14,7 +15,7 @@ Everything before 1.0 is an alpha: expect rough edges and tell me about them in 
 
 ## 0.1.0
 
-First alpha of the Linux desktop app, for friends to try.
+First alpha of the Linux desktop app.
 
 ### Added
 

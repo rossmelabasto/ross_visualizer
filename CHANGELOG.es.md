@@ -6,6 +6,7 @@ Todo lo anterior a la 1.0 es alfa: puede tener detalles, y me sirve que me los c
 
 ### Novedades
 
+- Fuente de audio en Ajustes. «Todo lo que suena» ahora también escucha las apps que suenan por otra salida: antes, con Discord en el audífono y Spotify en los parlantes, solo se oía Discord. O elige una sola app para que, en una llamada, las voces no muevan las escenas.
 - Tutorial de bienvenida la primera vez que abres la app: qué hace, las escenas, el overlay y los atajos de teclado para tu escritorio (niri, Hyprland, Sway o KDE), listos para copiar. Se vuelve a abrir desde Ajustes.
 - Botón para volver a la canción anterior en la barra de abajo.
 - La escena rOS muestra tu usuario y el nombre de tu compu en el prompt.
@@ -14,7 +15,7 @@ Todo lo anterior a la 1.0 es alfa: puede tener detalles, y me sirve que me los c
 
 ## 0.1.0
 
-Primera alfa de la app de escritorio para Linux, para que la prueben mis amigos.
+Primera alfa de la app de escritorio para Linux.
 
 ### Novedades
 
