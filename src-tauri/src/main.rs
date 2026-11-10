@@ -116,6 +116,36 @@ fn host_name() -> String {
     std::env::var("COMPUTERNAME").unwrap_or_else(|_| "localhost".into())
 }
 
+/// What the welcome tour needs to write the user's keyboard shortcuts for them.
+#[derive(serde::Serialize)]
+struct DesktopInfo {
+    /// niri, hyprland, sway, kde, gnome or other.
+    desktop: &'static str,
+    /// How to run us from a shortcut: the AppImage's own path, or the command on $PATH.
+    command: String,
+}
+
+#[tauri::command]
+fn desktop_info() -> DesktopInfo {
+    let has = |var: &str| std::env::var_os(var).is_some_and(|v| !v.is_empty());
+    let current = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default().to_lowercase();
+    let desktop = if has("NIRI_SOCKET") || current.contains("niri") {
+        "niri"
+    } else if has("HYPRLAND_INSTANCE_SIGNATURE") || current.contains("hyprland") {
+        "hyprland"
+    } else if has("SWAYSOCK") || current.contains("sway") {
+        "sway"
+    } else if current.contains("kde") {
+        "kde"
+    } else if current.contains("gnome") {
+        "gnome"
+    } else {
+        "other"
+    };
+    let command = std::env::var("APPIMAGE").ok().filter(|p| !p.is_empty()).unwrap_or_else(|| "ross-visualizer".into());
+    DesktopInfo { desktop, command }
+}
+
 /// Pages report through this when RV_DEBUG is set (see src/desktop/bridge.ts `debugLog`).
 #[tauri::command]
 fn debug_log(window: tauri::WebviewWindow, msg: String) {
@@ -146,6 +176,7 @@ fn main() {
             overlay::overlay_input,
             debug_log,
             user_host,
+            desktop_info,
         ])
         .on_page_load(move |webview, payload| {
             if payload.event() != tauri::webview::PageLoadEvent::Finished {

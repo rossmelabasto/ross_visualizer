@@ -2,7 +2,19 @@
 Type=Application
 Name=ross_visualizer
 Comment=Music visualizer with a desktop overlay
+Comment[es]=Visualizador de música con overlay sobre el escritorio
 Exec=ross-visualizer
 Icon=ross-visualizer
 Categories=AudioVideo;Audio;
 StartupWMClass=ross-visualizer
+Actions=overlay-toggle;overlay-next;
+
+[Desktop Action overlay-toggle]
+Name=Overlay on/off
+Name[es]=Overlay sí/no
+Exec=ross-visualizer overlay toggle
+
+[Desktop Action overlay-next]
+Name=Next overlay style
+Name[es]=Siguiente estilo de overlay
+Exec=ross-visualizer overlay next

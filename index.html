@@ -66,6 +66,7 @@
 
       <nav class="dock" id="dock" aria-label="Scenes">
         <button class="dock-btn" id="btn-source"></button>
+        <button class="dock-btn" id="btn-prev" hidden></button>
         <button class="dock-btn" id="btn-play" hidden></button>
         <button class="dock-btn" id="btn-next" hidden></button>
         <span class="dock-sep"></span>
@@ -95,6 +96,7 @@
         <label class="toggle"><input type="checkbox" id="autocycle" /><span id="t-autocycle"></span></label>
         <label class="toggle"><input type="checkbox" id="stats-toggle" /><span id="t-stats"></span></label>
         <button class="share" id="btn-share"></button>
+        <button class="share" id="btn-tour" hidden></button>
         <p class="fine" id="t-keys"></p>
         <p class="fine credit">
           <span id="t-madeby"></span> <a href="https://portfolio.rossmel.com/" target="_blank" rel="noopener">Rossmel Abasto</a> ·
@@ -102,6 +104,7 @@
         </p>
       </aside>
 
+      <div class="tour" id="tour" hidden></div>
       <pre class="stats" id="stats" hidden></pre>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
     </div>

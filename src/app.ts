@@ -16,6 +16,7 @@ import { TUNNEL_VERSIONS, TunnelScene } from './scenes/tunnel';
 import { lookupSong, searchSongs, spotifySearchUrl, type Track } from './search/itunes';
 import {
   artworkUrl,
+  desktopInfo,
   isDesktop,
   mediaControl,
   setOverlay,
@@ -26,12 +27,14 @@ import {
   overlaySupported,
   watchOverlay,
   watchOverlayOptions,
+  type DesktopInfo,
   type NowPlaying as SystemTrack,
 } from './desktop/bridge';
 import { OVERLAY_MODES, OVERLAY_OPTIONS, optionOf, SPOTS, type OverlayMode, type OverlayOptions } from './overlay/modes';
 import { Stage } from './stage';
 import { detectLang, safeGet, safeSet, strings, type Lang, type Strings } from './ui/i18n';
 import { icons } from './ui/icons';
+import { Tour } from './ui/tour';
 
 const SCENE_IDS = ['fluid', 'nebula', 'galaxy', 'aurora', 'kaleido', 'tunnel', 'ascii'] as const;
 type SceneId = (typeof SCENE_IDS)[number];
@@ -92,6 +95,16 @@ export class App {
   private overlayMode: string | null = null;
   private overlayOptions: OverlayOptions | null = null;
   private windowFullscreen = false;
+  private desktop: DesktopInfo = { desktop: 'other', command: 'ross-visualizer' };
+  private overlayOk = false;
+  private readonly tour = new Tour(
+    $('tour'),
+    () => ({ t: this.t, lang: this.lang, info: this.desktop, overlay: this.overlayOk }),
+    () => {
+      safeSet('rv_tour', '1');
+      this.wake();
+    },
+  );
 
   constructor(canvas: HTMLCanvasElement) {
     this.stage = new Stage(canvas);
@@ -283,13 +296,15 @@ export class App {
     this.setMediaSession(track);
   }
 
-  private next() {
+  /** Move through the search results: +1 for the next song, -1 for the previous one. */
+  private next(dir = 1) {
     if (!this.track || this.results.length < 2) {
       this.updateDock();
       return;
     }
+    const n = this.results.length;
     const i = this.results.findIndex((r) => r.id === this.track!.id);
-    this.playTrack(this.results[(i + 1) % this.results.length]);
+    this.playTrack(this.results[(i + dir + n) % n]);
   }
 
   private async useSource(kind: SourceKind) {
@@ -415,7 +430,10 @@ export class App {
     tip('btn-settings', t.settings);
     tip('btn-fullscreen', t.fullscreen);
     tip('btn-source', t.source);
-    tip('btn-next', 'Siguiente / Next');
+    tip('btn-next', t.next);
+    tip('btn-prev', t.prev);
+    $('btn-tour').textContent = t.tourOpen;
+    this.tour.refresh();
     tip('settings-close', t.close);
     tip('start-close', t.close);
     this.renderSceneButtons();
@@ -446,6 +464,7 @@ export class App {
       // The buttons drive whatever player the system reports (Spotify, a browser…).
       const paused = this.player?.status !== 'Playing';
       $('btn-play').hidden = !this.player;
+      $('btn-prev').hidden = !this.player;
       $('btn-play').innerHTML = paused ? icons.play : icons.pause;
       $('btn-play').setAttribute('aria-label', paused ? this.t.play : this.t.pause);
       $('btn-next').hidden = !this.player;
@@ -458,6 +477,7 @@ export class App {
     play.innerHTML = paused ? icons.play : icons.pause;
     play.setAttribute('aria-label', paused ? this.t.play : this.t.pause);
     $('btn-next').hidden = !(kind === 'media' && this.track && this.results.length > 1);
+    $('btn-prev').hidden = $('btn-next').hidden;
   }
 
   private setNow(now: NowPlaying | null) {
@@ -598,7 +618,7 @@ export class App {
     document.body.classList.remove('idle');
     clearTimeout(this.idleTimer);
     this.idleTimer = window.setTimeout(() => {
-      const busy = !$('start').hidden || !$('settings').hidden || document.activeElement instanceof HTMLInputElement;
+      const busy = !$('start').hidden || !$('settings').hidden || this.tour.isOpen || document.activeElement instanceof HTMLInputElement;
       if (!busy && this.engine.kind !== 'none') document.body.classList.add('idle');
     }, IDLE_AFTER);
   }
@@ -641,6 +661,7 @@ export class App {
     $('start-close').innerHTML = icons.close;
     $('btn-source').innerHTML = icons.waves;
     $('btn-next').innerHTML = icons.next;
+    $('btn-prev').innerHTML = icons.prev;
     document.querySelector('.search-icon')!.innerHTML = icons.search;
     this.updateFullscreenIcon();
 
@@ -661,6 +682,11 @@ export class App {
     $('start-close').addEventListener('click', () => this.hideStart());
     $('btn-play').addEventListener('click', () => this.togglePlay());
     $('btn-next').addEventListener('click', () => (this.engine.kind === 'native' ? mediaControl('next') : this.next()));
+    $('btn-prev').addEventListener('click', () => (this.engine.kind === 'native' ? mediaControl('previous') : this.next(-1)));
+    $('btn-tour').addEventListener('click', () => {
+      this.toggleSettings(false);
+      this.tour.open();
+    });
 
     $('src-mic').addEventListener('click', () => this.useSource('mic'));
     $('src-demo').addEventListener('click', () => this.useSource('demo'));
@@ -714,6 +740,10 @@ export class App {
 
     // Keyboard.
     window.addEventListener('keydown', (e) => {
+      if (this.tour.isOpen) {
+        this.tour.key(e);
+        return;
+      }
       const typing = e.target instanceof HTMLInputElement && e.target.type !== 'checkbox' && e.target.type !== 'range';
       if (e.key === 'Escape') {
         if (!$('settings').hidden) this.toggleSettings(false);
@@ -782,12 +812,16 @@ export class App {
     this.hideStart();
     $('btn-source').hidden = true;
     $('btn-share').hidden = true;
+    $('btn-tour').hidden = false;
     const analyser = new PcmAnalyser(48000);
     this.engine.useNative(analyser);
     this.setNow({ title: this.t.listening.native, artist: '' });
     this.stage.setCover(null, 3);
     try {
-      $('overlay-field').hidden = !(await overlaySupported());
+      this.overlayOk = await overlaySupported();
+      $('overlay-field').hidden = !this.overlayOk;
+      this.desktop = await desktopInfo();
+      if (!safeGet('rv_tour')) this.tour.open();
       await streamSystemAudio(analyser);
       await watchNowPlaying((n) => this.onSystemTrack(n));
       await watchOverlayOptions((o) => {

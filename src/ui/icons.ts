@@ -11,6 +11,7 @@ export const icons = {
   play: svg('<path d="M7 4.5v15l12-7.5z" fill="currentColor"/>'),
   pause: svg('<rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor"/>'),
   next: svg('<path d="M6 5v14l9-7zM18 5v14"/>'),
+  prev: svg('<path d="M18 5v14l-9-7zM6 5v14"/>'),
   expand: svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
   shrink: svg('<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>'),
   settings: svg('<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'),

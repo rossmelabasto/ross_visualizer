@@ -55,6 +55,17 @@ export async function userHost(): Promise<string | null> {
   return invoke<string>('user_host').catch(() => null);
 }
 
+export interface DesktopInfo {
+  desktop: 'niri' | 'hyprland' | 'sway' | 'kde' | 'gnome' | 'other';
+  /** How a shortcut runs the app: the AppImage's path or `ross-visualizer`. */
+  command: string;
+}
+
+export async function desktopInfo(): Promise<DesktopInfo> {
+  const { invoke } = await core();
+  return invoke<DesktopInfo>('desktop_info').catch(() => ({ desktop: 'other' as const, command: 'ross-visualizer' }));
+}
+
 export async function mediaControl(action: 'play-pause' | 'next' | 'previous') {
   const { invoke } = await core();
   await invoke('media_control', { action });
