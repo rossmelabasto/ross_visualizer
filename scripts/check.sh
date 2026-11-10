@@ -149,6 +149,13 @@ else
   warn 'pw-record no está: lo instala el paquete de la app'
 fi
 
+# Para escuchar apps en otras salidas y elegir la fuente, la app lee y conecta el grafo de PipeWire.
+if has pw-dump && has pw-link; then
+  ok 'pw-dump y pw-link presentes: se puede elegir la fuente de audio'
+else
+  warn 'Falta pw-dump o pw-link: solo se escuchará la salida predeterminada (los instala el paquete de la app)'
+fi
+
 # ---------------------------------------------------------------- reproductor
 title 'Canción y portada'
 if has playerctl; then

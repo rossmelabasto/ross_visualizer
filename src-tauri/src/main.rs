@@ -14,6 +14,7 @@
 mod audio;
 mod media;
 mod overlay;
+mod route;
 mod tray;
 
 use std::process::Command;
@@ -165,6 +166,8 @@ fn main() {
         .manage(tray::Items::default())
         .invoke_handler(tauri::generate_handler![
             audio::audio_subscribe,
+            audio::audio_sources,
+            audio::set_audio_source,
             media::now_playing,
             media::artwork,
             media::media_control,

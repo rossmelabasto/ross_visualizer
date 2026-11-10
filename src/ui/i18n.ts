@@ -64,6 +64,10 @@ const es = {
   } as Record<string, string>,
   tapHint: 'Desliza para cambiar de escena',
   prev: 'Anterior',
+  audioSource: 'Fuente de audio',
+  audioAll: 'Todo lo que suena',
+  audioHint: 'Elige una app para que solo ella mueva las escenas, por ejemplo en una llamada.',
+  audioIdle: 'sin sonar',
   next: 'Siguiente',
   tourOpen: 'Ver el tutorial',
   tour: {
@@ -76,7 +80,7 @@ const es = {
     copied: 'Copiado',
     welcomeTitle: 'Hola, esto es ross_visualizer',
     welcomeBody: 'Escucha todo lo que suena en tu compu y lo pinta con los colores de la portada. No hay nada que configurar: pon algo en Spotify, en el navegador o en tu reproductor y las escenas se mueven solas.',
-    welcomeNote: 'Es una alfa. Si algo se ve raro, cuéntame en GitHub.',
+    welcomeNote: '¿Estás en una llamada? En Ajustes → Fuente de audio puedes elegir solo tu reproductor, así las voces no mueven las escenas. Es una alfa: si algo se ve raro, cuéntame en GitHub.',
     scenesTitle: 'Escenas',
     scenesBody: 'Hay siete. Cambia entre ellas desde la barra de abajo o con el teclado:',
     scenesKeys: [
@@ -184,6 +188,10 @@ const en: Strings = {
   },
   tapHint: 'Swipe to change scene',
   prev: 'Previous',
+  audioSource: 'Audio source',
+  audioAll: 'Everything that plays',
+  audioHint: 'Pick an app to have only it move the scenes, for example during a call.',
+  audioIdle: 'not playing',
   next: 'Next',
   tourOpen: 'Show the tour',
   tour: {
@@ -196,7 +204,7 @@ const en: Strings = {
     copied: 'Copied',
     welcomeTitle: 'Hi, this is ross_visualizer',
     welcomeBody: "It listens to everything your computer plays and paints it with the colors of the album art. There's nothing to set up: play something in Spotify, your browser or your player and the scenes move on their own.",
-    welcomeNote: "It's an alpha. If something looks off, tell me on GitHub.",
+    welcomeNote: "On a call? Settings → Audio source lets you pick just your player, so voices don't move the scenes. It's an alpha: if something looks off, tell me on GitHub.",
     scenesTitle: 'Scenes',
     scenesBody: 'There are seven. Switch between them from the bar at the bottom or with the keyboard:',
     scenesKeys: [

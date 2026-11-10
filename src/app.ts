@@ -18,6 +18,9 @@ import {
   artworkUrl,
   desktopInfo,
   isDesktop,
+  setAudioSource,
+  watchAudioSources,
+  type AudioSources,
   mediaControl,
   setOverlay,
   setOverlayOptions,
@@ -97,6 +100,7 @@ export class App {
   private windowFullscreen = false;
   private desktop: DesktopInfo = { desktop: 'other', command: 'ross-visualizer' };
   private overlayOk = false;
+  private audio: AudioSources = { source: 'all', apps: [] };
   private readonly tour = new Tour(
     $('tour'),
     () => ({ t: this.t, lang: this.lang, info: this.desktop, overlay: this.overlayOk }),
@@ -421,6 +425,8 @@ export class App {
     $('btn-share').innerHTML = `${icons.share}<span>${t.share}</span>`;
     $('t-keys').textContent = isDesktop ? t.desktopKeys : matchMedia('(pointer: coarse)').matches ? t.tapHint : t.keys;
     $('t-overlay').textContent = t.overlay;
+    $('t-audio').textContent = t.audioSource;
+    $('t-audio-hint').textContent = t.audioHint;
     $('t-madeby').textContent = t.madeBy;
     $('t-code').textContent = t.code;
     const tip = (id: string, label: string) => {
@@ -438,6 +444,7 @@ export class App {
     tip('start-close', t.close);
     this.renderSceneButtons();
     this.renderOverlayModes();
+    this.renderAudioSources();
     this.updateSearchHint();
     this.updateDock();
     this.renderNowLinks();
@@ -821,6 +828,13 @@ export class App {
       this.overlayOk = await overlaySupported();
       $('overlay-field').hidden = !this.overlayOk;
       this.desktop = await desktopInfo();
+      $('audio-field').hidden = false;
+      const saved = safeGet('rv_audio_source');
+      if (saved && saved !== 'all') await setAudioSource(saved);
+      await watchAudioSources((s) => {
+        this.audio = s;
+        this.renderAudioSources();
+      });
       if (!safeGet('rv_tour')) this.tour.open();
       await streamSystemAudio(analyser);
       await watchNowPlaying((n) => this.onSystemTrack(n));
@@ -864,6 +878,31 @@ export class App {
     this.artBlob = art;
     this.setNow({ title: n.title, artist: n.artist, art: art ?? undefined });
     this.stage.setCover(art, n.title.length);
+  }
+
+  /** "Everything that plays" and each app with audio open; the chosen app stays listed while quiet. */
+  private renderAudioSources() {
+    if (!isDesktop) return;
+    const box = $('audio-sources');
+    box.innerHTML = '';
+    const add = (id: string, label: string, idle = false) => {
+      const b = document.createElement('button');
+      b.dataset.source = id;
+      b.classList.toggle('on', id === this.audio.source);
+      b.classList.toggle('idle', idle);
+      b.textContent = label;
+      if (idle) b.title = this.t.audioIdle;
+      b.addEventListener('click', () => {
+        safeSet('rv_audio_source', id);
+        setAudioSource(id);
+      });
+      box.appendChild(b);
+    };
+    add('all', this.t.audioAll);
+    const apps = [...this.audio.apps];
+    const chosen = this.audio.source.startsWith('app:') ? this.audio.source.slice(4) : null;
+    if (chosen && !apps.some((a) => a.key === chosen)) apps.push({ key: chosen, label: chosen[0].toUpperCase() + chosen.slice(1), playing: false });
+    for (const a of apps) add(`app:${a.key}`, a.label, !a.playing);
   }
 
   private renderOverlayModes() {

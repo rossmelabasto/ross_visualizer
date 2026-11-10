@@ -55,6 +55,25 @@ export async function userHost(): Promise<string | null> {
   return invoke<string>('user_host').catch(() => null);
 }
 
+/** Where the system audio comes from: everything that plays, or one app. */
+export interface AudioSources {
+  /** "all" or "app:<key>". */
+  source: string;
+  apps: { key: string; label: string; playing: boolean }[];
+}
+
+export async function watchAudioSources(cb: (s: AudioSources) => void) {
+  const { invoke } = await core();
+  const { listen } = await events();
+  await listen<AudioSources>('audio-sources', (e) => cb(e.payload));
+  cb(await invoke<AudioSources>('audio_sources'));
+}
+
+export async function setAudioSource(source: string) {
+  const { invoke } = await core();
+  await invoke('set_audio_source', { source });
+}
+
 export interface DesktopInfo {
   desktop: 'niri' | 'hyprland' | 'sway' | 'kde' | 'gnome' | 'other';
   /** How a shortcut runs the app: the AppImage's path or `ross-visualizer`. */

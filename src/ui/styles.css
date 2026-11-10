@@ -572,12 +572,29 @@ kbd {
   background: var(--accent);
   color: var(--accent-ink);
 }
+.audio-sources button:first-child {
+  grid-column: 1 / -1;
+}
+.audio-sources button {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 8px;
+}
+.audio-sources button.idle:not(.on) {
+  opacity: 0.55;
+}
+.field .fine {
+  margin: 0;
+}
 
 .settings {
   position: fixed;
   top: calc(72px + var(--safe-t));
   right: 16px;
   width: min(320px, calc(100% - 32px));
+  max-height: calc(100% - 180px - var(--safe-t) - var(--safe-b));
+  overflow-y: auto;
   padding: 18px;
   border-radius: var(--radius);
   background: var(--glass-strong);
