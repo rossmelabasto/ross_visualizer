@@ -85,6 +85,42 @@ chmod +x ross_visualizer_*_amd64.AppImage
 ./ross_visualizer_*_amd64.AppImage
 ```
 
+## Keyboard shortcuts
+
+Two shortcuts turn the overlay on and switch its style from anywhere, without opening the app. Every desktop keeps its shortcuts in its own config, so the app can't add them itself. The first time you open it, the tour shows the ones for your desktop. If you use the AppImage, replace `ross-visualizer` with the file's path.
+
+| Shortcut | Does |
+| --- | --- |
+| `Super+Ctrl+V` | Turns the overlay on or off |
+| `Super+Ctrl+B` | Goes to the next style |
+
+**niri:** inside the `binds { }` block of `~/.config/niri/config.kdl`. niri picks them up when you save.
+
+```kdl
+Mod+Ctrl+V hotkey-overlay-title="Visualizer: overlay on/off" { spawn "ross-visualizer" "overlay" "toggle"; }
+Mod+Ctrl+B hotkey-overlay-title="Visualizer: next overlay style" { spawn "ross-visualizer" "overlay" "next"; }
+```
+
+**Hyprland:** in `~/.config/hypr/hyprland.conf`. Hyprland picks them up when you save.
+
+```ini
+bind = SUPER CTRL, V, exec, ross-visualizer overlay toggle
+bind = SUPER CTRL, B, exec, ross-visualizer overlay next
+```
+
+**Sway:** in `~/.config/sway/config`, then `swaymsg reload`.
+
+```
+bindsym Mod4+Ctrl+v exec ross-visualizer overlay toggle
+bindsym Mod4+Ctrl+b exec ross-visualizer overlay next
+```
+
+**KDE Plasma:** System Settings → Keyboard → Shortcuts → Add New → Command or Script. Make one with `ross-visualizer overlay toggle` and `Meta+Ctrl+V`, and another with `ross-visualizer overlay next` and `Meta+Ctrl+B`.
+
+**Other desktops:** give `ross-visualizer overlay toggle` one shortcut and `ross-visualizer overlay next` another. GNOME and X11 have no overlay, so you don't need them there.
+
+With no setup at all: right-click the app's icon in your launcher or dock → "Overlay on/off" or "Next overlay style".
+
 ## Troubleshooting
 
 - **The window is black or blank on NVIDIA:** run `WEBKIT_DISABLE_DMABUF_RENDERER=1 ross-visualizer`, and tell me if that fixes it.

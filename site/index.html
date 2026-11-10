@@ -17,6 +17,7 @@
     <nav class="actions">
       <a class="btn primary" href="#instalar">Instalar</a>
       <a class="btn" href="#comprobar">¿Va a funcionar en mi compu?</a>
+      <a class="btn" href="#atajos">Atajos de teclado</a>
       <a class="btn" href="https://visualizer.rossmel.com">Probar la demo web</a>
     </nav>
   </div>
@@ -95,6 +96,65 @@ sudo rm /etc/yum.repos.d/ross.repo</code></pre><button class="copy" type="button
       <div class="code"><pre><code>chmod +x ross_visualizer_@VERSION@_amd64.AppImage
 ./ross_visualizer_@VERSION@_amd64.AppImage</code></pre><button class="copy" type="button">Copiar</button></div>
     </div>
+  </section>
+
+  <section id="atajos">
+    <h2>Atajos de teclado</h2>
+    <p>Con dos atajos prendes el overlay y cambias de estilo desde cualquier lado, sin abrir la app. La app no puede agregarlos sola porque cada escritorio guarda los suyos en su propia configuración, pero son solo dos líneas. La primera vez que abres la app, el tutorial te muestra las de tu escritorio.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Atajo</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td><code>Super+Ctrl+V</code></td><td>Prende o apaga el overlay</td></tr>
+          <tr><td><code>Super+Ctrl+B</code></td><td>Pasa al siguiente estilo de overlay</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Escritorio">
+      <button role="tab" type="button" aria-selected="true" aria-controls="k-niri" id="kb-niri">niri</button>
+      <button role="tab" type="button" aria-selected="false" aria-controls="k-hypr" id="kb-hypr">Hyprland</button>
+      <button role="tab" type="button" aria-selected="false" aria-controls="k-sway" id="kb-sway">Sway</button>
+      <button role="tab" type="button" aria-selected="false" aria-controls="k-kde" id="kb-kde">KDE Plasma</button>
+      <button role="tab" type="button" aria-selected="false" aria-controls="k-other" id="kb-other">Otros</button>
+    </div>
+
+    <div class="panel" role="tabpanel" id="k-niri" aria-labelledby="kb-niri">
+      <p>Pégalas dentro del bloque <code>binds { }</code> de <code>~/.config/niri/config.kdl</code>. niri las toma al guardar.</p>
+      <div class="code"><pre><code>Mod+Ctrl+V hotkey-overlay-title="Visualizer: overlay sí/no" { spawn "ross-visualizer" "overlay" "toggle"; }
+Mod+Ctrl+B hotkey-overlay-title="Visualizer: siguiente estilo" { spawn "ross-visualizer" "overlay" "next"; }</code></pre><button class="copy" type="button">Copiar</button></div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="k-hypr" aria-labelledby="kb-hypr" hidden>
+      <p>Pégalas en <code>~/.config/hypr/hyprland.conf</code>. Hyprland las toma al guardar.</p>
+      <div class="code"><pre><code>bind = SUPER CTRL, V, exec, ross-visualizer overlay toggle
+bind = SUPER CTRL, B, exec, ross-visualizer overlay next</code></pre><button class="copy" type="button">Copiar</button></div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="k-sway" aria-labelledby="kb-sway" hidden>
+      <p>Pégalas en <code>~/.config/sway/config</code> y luego corre <code>swaymsg reload</code>.</p>
+      <div class="code"><pre><code>bindsym Mod4+Ctrl+v exec ross-visualizer overlay toggle
+bindsym Mod4+Ctrl+b exec ross-visualizer overlay next</code></pre><button class="copy" type="button">Copiar</button></div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="k-kde" aria-labelledby="kb-kde" hidden>
+      <ol class="steps">
+        <li>Abre Preferencias del sistema → Teclado → Atajos.</li>
+        <li>Añadir nuevo → Comando o script. Pega el primer comando y asígnale <code>Meta+Ctrl+V</code>.</li>
+        <li>Repite con el segundo comando y <code>Meta+Ctrl+B</code>.</li>
+      </ol>
+      <div class="code"><pre><code>ross-visualizer overlay toggle
+ross-visualizer overlay next</code></pre><button class="copy" type="button">Copiar</button></div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="k-other" aria-labelledby="kb-other" hidden>
+      <p>En la configuración de tu escritorio, asigna un atajo a cada comando:</p>
+      <div class="code"><pre><code>ross-visualizer overlay toggle
+ross-visualizer overlay next</code></pre><button class="copy" type="button">Copiar</button></div>
+      <p class="small">En GNOME y en X11 no hay overlay, así que estos atajos no hacen falta.</p>
+    </div>
+
+    <p class="small">Si usas el AppImage, cambia <code>ross-visualizer</code> por la ruta del archivo. Y sin configurar nada: haz clic derecho en el ícono de la app en tu lanzador o dock y elige "Overlay sí/no" o "Siguiente estilo de overlay".</p>
   </section>
 
   <section id="requisitos">

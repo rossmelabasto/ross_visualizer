@@ -41,7 +41,7 @@ ross-visualizer                  # abre la ventana (también queda en la bandeja
 ross-visualizer overlay toggle   # o off | next | prev | halo | horizon | orbit | curtain | embers | rain | wave
 ```
 
-Una instancia abierta recibe estos comandos, así que sirven como atajos de teclado, por ejemplo en niri:
+Una instancia abierta recibe estos comandos, así que sirven como atajos de teclado (en [INSTALL.es.md](docs/INSTALL.es.md#atajos-de-teclado) están para niri, Hyprland, Sway y KDE), por ejemplo en niri:
 
 ```kdl
 Mod+Ctrl+V { spawn "ross-visualizer" "overlay" "toggle"; }

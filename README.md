@@ -49,7 +49,7 @@ ross-visualizer                  # open the window (it also lives in the tray)
 ross-visualizer overlay toggle   # or off | next | prev | halo | horizon | orbit | curtain | embers | rain | wave
 ```
 
-A running instance picks up these commands, so they work as key bindings, e.g. in niri:
+A running instance picks up these commands, so they work as key bindings ([INSTALL.md](docs/INSTALL.md#keyboard-shortcuts) has them for niri, Hyprland, Sway and KDE), e.g. in niri:
 
 ```kdl
 Mod+Ctrl+V { spawn "ross-visualizer" "overlay" "toggle"; }

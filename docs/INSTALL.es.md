@@ -85,6 +85,42 @@ chmod +x ross_visualizer_*_amd64.AppImage
 ./ross_visualizer_*_amd64.AppImage
 ```
 
+## Atajos de teclado
+
+Con dos atajos prendes el overlay y cambias de estilo desde cualquier lado, sin abrir la app. Cada escritorio guarda sus atajos en su propia configuración, así que la app no puede agregarlos sola. La primera vez que la abres, el tutorial te muestra los de tu escritorio. Si usas el AppImage, cambia `ross-visualizer` por la ruta del archivo.
+
+| Atajo | Qué hace |
+| --- | --- |
+| `Super+Ctrl+V` | Prende o apaga el overlay |
+| `Super+Ctrl+B` | Pasa al siguiente estilo |
+
+**niri:** dentro del bloque `binds { }` de `~/.config/niri/config.kdl`. niri las toma al guardar.
+
+```kdl
+Mod+Ctrl+V hotkey-overlay-title="Visualizer: overlay sí/no" { spawn "ross-visualizer" "overlay" "toggle"; }
+Mod+Ctrl+B hotkey-overlay-title="Visualizer: siguiente estilo" { spawn "ross-visualizer" "overlay" "next"; }
+```
+
+**Hyprland:** en `~/.config/hypr/hyprland.conf`. Hyprland las toma al guardar.
+
+```ini
+bind = SUPER CTRL, V, exec, ross-visualizer overlay toggle
+bind = SUPER CTRL, B, exec, ross-visualizer overlay next
+```
+
+**Sway:** en `~/.config/sway/config`, y luego `swaymsg reload`.
+
+```
+bindsym Mod4+Ctrl+v exec ross-visualizer overlay toggle
+bindsym Mod4+Ctrl+b exec ross-visualizer overlay next
+```
+
+**KDE Plasma:** Preferencias del sistema → Teclado → Atajos → Añadir nuevo → Comando o script. Crea uno con `ross-visualizer overlay toggle` y `Meta+Ctrl+V`, y otro con `ross-visualizer overlay next` y `Meta+Ctrl+B`.
+
+**Otros escritorios:** asigna un atajo a `ross-visualizer overlay toggle` y otro a `ross-visualizer overlay next`. En GNOME y en X11 no hay overlay, así que no hacen falta.
+
+Sin configurar nada: clic derecho en el ícono de la app en tu lanzador o dock → "Overlay sí/no" o "Siguiente estilo de overlay".
+
 ## Si algo falla
 
 - **La ventana sale negra o en blanco con NVIDIA:** corre `WEBKIT_DISABLE_DMABUF_RENDERER=1 ross-visualizer` y cuéntame si con eso se arregla.
