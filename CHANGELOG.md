@@ -2,6 +2,16 @@
 
 Everything before 1.0 is an alpha: expect rough edges and tell me about them in the [issues](https://github.com/rossmelabasto/ross_visualizer/issues).
 
+## 0.1.1
+
+### New
+
+- A welcome tour the first time you open the app: what it does, the scenes, the overlay and keyboard shortcuts for your desktop (niri, Hyprland, Sway or KDE), ready to copy. Settings opens it again.
+- A button on the bottom bar to go back to the previous song.
+- The rOS scene shows your user and your computer's name in its prompt.
+- Actions on the app's icon: right-click → "Overlay on/off" or "Next overlay style".
+- Keyboard shortcuts for each desktop, also on ros.rossmel.com and in the docs.
+
 ## 0.1.0
 
 First alpha of the Linux desktop app, for friends to try.

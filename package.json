@@ -1,6 +1,6 @@
 {
   "name": "ross_visualizer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Music visualizer that listens to your audio and paints with the colors of the album art.",
   "private": true,
   "type": "module",

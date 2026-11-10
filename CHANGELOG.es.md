@@ -2,6 +2,16 @@
 
 Todo lo anterior a la 1.0 es alfa: puede tener detalles, y me sirve que me los cuentes en los [issues](https://github.com/rossmelabasto/ross_visualizer/issues).
 
+## 0.1.1
+
+### Novedades
+
+- Tutorial de bienvenida la primera vez que abres la app: qué hace, las escenas, el overlay y los atajos de teclado para tu escritorio (niri, Hyprland, Sway o KDE), listos para copiar. Se vuelve a abrir desde Ajustes.
+- Botón para volver a la canción anterior en la barra de abajo.
+- La escena rOS muestra tu usuario y el nombre de tu compu en el prompt.
+- Acciones en el ícono de la app: clic derecho → "Overlay sí/no" o "Siguiente estilo de overlay".
+- Los atajos de teclado para cada escritorio, también en ros.rossmel.com y en la documentación.
+
 ## 0.1.0
 
 Primera alfa de la app de escritorio para Linux, para que la prueben mis amigos.
