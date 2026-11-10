@@ -49,6 +49,12 @@ export async function artworkUrl(url: string): Promise<string | null> {
   }
 }
 
+/** "user@host" of this computer, for the ASCII scene's prompt. */
+export async function userHost(): Promise<string | null> {
+  const { invoke } = await core();
+  return invoke<string>('user_host').catch(() => null);
+}
+
 export async function mediaControl(action: 'play-pause' | 'next' | 'previous') {
   const { invoke } = await core();
   await invoke('media_control', { action });

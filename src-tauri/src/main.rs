@@ -71,6 +71,51 @@ fn handle_args(app: &AppHandle, args: &[String]) {
     }
 }
 
+/// "user@host" for the ASCII scene's prompt, like a shell would show it.
+#[tauri::command]
+fn user_host() -> String {
+    format!("{}@{}", user_name(), host_name())
+}
+
+#[cfg(unix)]
+fn user_name() -> String {
+    // The account name (getpwuid), so `sudo -E` or a stale $USER don't lie.
+    unsafe {
+        let pw = libc::getpwuid(libc::getuid());
+        if !pw.is_null() && !(*pw).pw_name.is_null() {
+            if let Ok(name) = std::ffi::CStr::from_ptr((*pw).pw_name).to_str() {
+                if !name.is_empty() {
+                    return name.to_owned();
+                }
+            }
+        }
+    }
+    std::env::var("USER").unwrap_or_else(|_| "user".into())
+}
+
+#[cfg(not(unix))]
+fn user_name() -> String {
+    std::env::var("USERNAME").unwrap_or_else(|_| "user".into())
+}
+
+#[cfg(unix)]
+fn host_name() -> String {
+    let mut buf = [0u8; 256];
+    let ok = unsafe { libc::gethostname(buf.as_mut_ptr().cast(), buf.len()) } == 0;
+    let end = buf.iter().position(|&b| b == 0).unwrap_or(buf.len());
+    let name = if ok { String::from_utf8_lossy(&buf[..end]).into_owned() } else { String::new() };
+    // Short form, like bash's \h.
+    match name.split('.').next() {
+        Some(short) if !short.is_empty() => short.to_owned(),
+        _ => "localhost".into(),
+    }
+}
+
+#[cfg(not(unix))]
+fn host_name() -> String {
+    std::env::var("COMPUTERNAME").unwrap_or_else(|_| "localhost".into())
+}
+
 /// Pages report through this when RV_DEBUG is set (see src/desktop/bridge.ts `debugLog`).
 #[tauri::command]
 fn debug_log(window: tauri::WebviewWindow, msg: String) {
@@ -100,6 +145,7 @@ fn main() {
             overlay::set_overlay_options,
             overlay::overlay_input,
             debug_log,
+            user_host,
         ])
         .on_page_load(move |webview, payload| {
             if payload.event() != tauri::webview::PageLoadEvent::Finished {

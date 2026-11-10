@@ -1,5 +1,6 @@
 import type { FrameState, Program, Renderer, Scene, Target } from '../gl/renderer';
 import { hexToLinearRgb } from '../color/oklab';
+import { isDesktop, userHost } from '../desktop/bridge';
 
 export const ATLAS_COLS = 16;
 export const ATLAS_ROWS = 6; // 96 slots for printable ASCII 32..126
@@ -167,6 +168,8 @@ export class AsciiScene implements Scene {
   private textData = new Uint8Array(TEXT_W * TEXT_LINES);
   private lens = [0, 0, 0];
   private brand = hexToLinearRgb('#afff00');
+  // The web demo can't know whose computer it's on; the desktop app asks the system.
+  private prompt = 'rossmel@rOS';
 
   init(r: Renderer) {
     const gl = r.gl;
@@ -179,6 +182,7 @@ export class AsciiScene implements Scene {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
     this.atlas = createGlyphAtlas(r);
+    if (isDesktop) userHost().then((who) => who && (this.prompt = who));
   }
 
   private setLine(i: number, s: string) {
@@ -199,7 +203,7 @@ export class AsciiScene implements Scene {
     const topRow = Math.ceil((76 * r.pixelRatio) / cellH);
     const bottomRow = rows - 1 - Math.ceil((92 * r.pixelRatio) / cellH);
 
-    this.setLine(0, 'rossmel@rOS ~ $ visualizer --scene ros');
+    this.setLine(0, `${this.prompt} ~ $ visualizer --scene ros`);
     this.setLine(1, frame.title ? `> ${frame.title}` : '> esperando audio...');
     const status = `bass [${bar(f.bass)}]  mid [${bar(f.mid)}]  high [${bar(f.high)}]  ${f.bpm ? `${f.bpm} bpm` : '--- bpm'}  beats ${String(f.beatCount).padStart(4, '0')}`;
     this.setLine(2, status.length > cols ? status.slice(0, cols) : status);
