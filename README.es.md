@@ -19,10 +19,10 @@
 La app de escritorio está en **alfa**. Mira qué va a funcionar en tu sistema sin instalar nada:
 
 ```sh
-curl -fsSL https://ros.rossmel.com/check.sh | bash
+curl -fsSL https://repo.rossmel.com/check.sh | bash
 ```
 
-Hay repositorios firmados para pacman (CachyOS, Arch), APT (Ubuntu, Debian) y DNF (Fedora), además de un AppImage. AUR llegará pronto. Los comandos, requisitos y paquetes están en **[ros.rossmel.com](https://ros.rossmel.com)** y en la [guía de instalación](docs/INSTALL.es.md); lo que cambia en cada versión está en el [registro de cambios](CHANGELOG.es.md).
+Hay repositorios firmados para pacman (CachyOS, Arch), APT (Ubuntu, Debian) y DNF (Fedora), además de un AppImage. AUR llegará pronto. Los comandos, requisitos y paquetes están en **[repo.rossmel.com](https://repo.rossmel.com/ross-visualizer/)** y en la [guía de instalación](docs/INSTALL.es.md); lo que cambia en cada versión está en el [registro de cambios](CHANGELOG.es.md).
 
 ## App de escritorio
 

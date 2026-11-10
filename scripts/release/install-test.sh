@@ -20,7 +20,7 @@ case $kind in
   rpm)
     dnf install -y -q curl xorg-x11-server-Xvfb xorg-x11-xauth which dbus-daemon
     # The published file points at the real domain; here the repository is on localhost.
-    curl -fsSL "$url/rpm/ross.repo" | sed "s#https://ros.rossmel.com#$url#g" > /etc/yum.repos.d/ross.repo
+    curl -fsSL "$url/rpm/ross.repo" | sed "s#https://repo.rossmel.com#$url#g" > /etc/yum.repos.d/ross.repo
     dnf install -y -q --setopt=install_weak_deps=False ross-visualizer
     ;;
   arch)

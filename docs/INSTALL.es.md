@@ -1,6 +1,6 @@
 # Instalar en Linux
 
-[English](INSTALL.md) · Sitio: [ros.rossmel.com](https://ros.rossmel.com)
+[English](INSTALL.md) · Sitio: [repo.rossmel.com/ross-visualizer](https://repo.rossmel.com/ross-visualizer/)
 
 ross_visualizer está en **alfa**. Si algo falla, [abre un issue](https://github.com/rossmelabasto/ross_visualizer/issues).
 
@@ -9,7 +9,7 @@ ross_visualizer está en **alfa**. Si algo falla, [abre un issue](https://github
 Esto solo lee información de tu sistema: no instala nada, no pide contraseña y no envía datos a ningún lado.
 
 ```sh
-curl -fsSL https://ros.rossmel.com/check.sh | bash
+curl -fsSL https://repo.rossmel.com/check.sh | bash
 ```
 
 ## Requisitos
@@ -36,9 +36,9 @@ Todas las dependencias vienen con el paquete. Solo esto depende de tu sistema:
 ## CachyOS y Arch
 
 ```sh
-curl -fsSL https://ros.rossmel.com/key.asc | sudo pacman-key --add -
+curl -fsSL https://repo.rossmel.com/key.asc | sudo pacman-key --add -
 sudo pacman-key --lsign-key C08F57FCE06B95B52145012C274187B9D5E9FFEB
-printf '\n[ross]\nServer = https://ros.rossmel.com/arch/x86_64\n' | sudo tee -a /etc/pacman.conf
+printf '\n[ross]\nServer = https://repo.rossmel.com/arch/x86_64\n' | sudo tee -a /etc/pacman.conf
 sudo pacman -Syu ross-visualizer-bin
 ```
 
@@ -47,8 +47,8 @@ Se actualiza con `sudo pacman -Syu`. Para quitarlo, corre `sudo pacman -Rns ross
 ## Ubuntu y Debian
 
 ```sh
-curl -fsSL https://ros.rossmel.com/key.asc | sudo gpg --dearmor -o /usr/share/keyrings/ross.gpg
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ross.gpg] https://ros.rossmel.com/apt stable main" | sudo tee /etc/apt/sources.list.d/ross.list
+curl -fsSL https://repo.rossmel.com/key.asc | sudo gpg --dearmor -o /usr/share/keyrings/ross.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ross.gpg] https://repo.rossmel.com/apt stable main" | sudo tee /etc/apt/sources.list.d/ross.list
 sudo apt update
 sudo apt install ross-visualizer
 ```
@@ -63,7 +63,7 @@ sudo rm /etc/apt/sources.list.d/ross.list /usr/share/keyrings/ross.gpg
 ## Fedora
 
 ```sh
-sudo curl -fsSL https://ros.rossmel.com/rpm/ross.repo -o /etc/yum.repos.d/ross.repo
+sudo curl -fsSL https://repo.rossmel.com/rpm/ross.repo -o /etc/yum.repos.d/ross.repo
 sudo dnf install ross-visualizer
 ```
 

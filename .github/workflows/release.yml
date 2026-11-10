@@ -195,7 +195,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
-      actions: write
     env:
       VERSION: ${{ needs.build.outputs.version }}
       GH_TOKEN: ${{ github.token }}
@@ -225,5 +224,8 @@ jobs:
           gh release create "$GITHUB_REF_NAME" --prerelease --verify-tag \
             --title "ross_visualizer $VERSION (alpha)" --notes-file notes.md \
             packages/* ross-visualizer-repos.tar.gz aur/PKGBUILD aur/.SRCINFO
-      - name: Refresh the website
-        run: gh workflow run site.yml --ref main
+      - name: Publish on repo.rossmel.com
+        env:
+          HUB_DEPLOY_KEY: ${{ secrets.HUB_DEPLOY_KEY }}
+          ROS_WEB_DEPLOY_KEY: ${{ secrets.ROS_WEB_DEPLOY_KEY }}
+        run: bash scripts/release/notify-sites.sh "$VERSION"

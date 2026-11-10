@@ -1,6 +1,6 @@
 # Installing on Linux
 
-[Español](INSTALL.es.md) · Website: [ros.rossmel.com](https://ros.rossmel.com)
+[Español](INSTALL.es.md) · Website: [repo.rossmel.com/ross-visualizer](https://repo.rossmel.com/ross-visualizer/)
 
 ross_visualizer is an **alpha**. If something breaks, please [open an issue](https://github.com/rossmelabasto/ross_visualizer/issues).
 
@@ -9,7 +9,7 @@ ross_visualizer is an **alpha**. If something breaks, please [open an issue](htt
 This only reads information about your system: it installs nothing, asks for no password and sends nothing anywhere.
 
 ```sh
-curl -fsSL https://ros.rossmel.com/check.sh | bash
+curl -fsSL https://repo.rossmel.com/check.sh | bash
 ```
 
 ## Requirements
@@ -36,9 +36,9 @@ Every dependency comes with the package. Only these depend on your system:
 ## CachyOS and Arch
 
 ```sh
-curl -fsSL https://ros.rossmel.com/key.asc | sudo pacman-key --add -
+curl -fsSL https://repo.rossmel.com/key.asc | sudo pacman-key --add -
 sudo pacman-key --lsign-key C08F57FCE06B95B52145012C274187B9D5E9FFEB
-printf '\n[ross]\nServer = https://ros.rossmel.com/arch/x86_64\n' | sudo tee -a /etc/pacman.conf
+printf '\n[ross]\nServer = https://repo.rossmel.com/arch/x86_64\n' | sudo tee -a /etc/pacman.conf
 sudo pacman -Syu ross-visualizer-bin
 ```
 
@@ -47,8 +47,8 @@ Update with `sudo pacman -Syu`. To remove it, run `sudo pacman -Rns ross-visuali
 ## Ubuntu and Debian
 
 ```sh
-curl -fsSL https://ros.rossmel.com/key.asc | sudo gpg --dearmor -o /usr/share/keyrings/ross.gpg
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ross.gpg] https://ros.rossmel.com/apt stable main" | sudo tee /etc/apt/sources.list.d/ross.list
+curl -fsSL https://repo.rossmel.com/key.asc | sudo gpg --dearmor -o /usr/share/keyrings/ross.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ross.gpg] https://repo.rossmel.com/apt stable main" | sudo tee /etc/apt/sources.list.d/ross.list
 sudo apt update
 sudo apt install ross-visualizer
 ```
@@ -63,7 +63,7 @@ sudo rm /etc/apt/sources.list.d/ross.list /usr/share/keyrings/ross.gpg
 ## Fedora
 
 ```sh
-sudo curl -fsSL https://ros.rossmel.com/rpm/ross.repo -o /etc/yum.repos.d/ross.repo
+sudo curl -fsSL https://repo.rossmel.com/rpm/ross.repo -o /etc/yum.repos.d/ross.repo
 sudo dnf install ross-visualizer
 ```
 

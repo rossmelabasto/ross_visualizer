@@ -11,7 +11,7 @@ Todo lo anterior a la 1.0 es alfa: puede tener detalles, y me sirve que me los c
 - Botón para volver a la canción anterior en la barra de abajo.
 - La escena rOS muestra tu usuario y el nombre de tu compu en el prompt.
 - Acciones en el ícono de la app: clic derecho → "Overlay sí/no" o "Siguiente estilo de overlay".
-- Los atajos de teclado para cada escritorio, también en ros.rossmel.com y en la documentación.
+- Los atajos de teclado para cada escritorio, también en repo.rossmel.com y en la documentación.
 
 ## 0.1.0
 

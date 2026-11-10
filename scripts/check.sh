@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ross_visualizer: ¿va a funcionar en esta compu?
-#   curl -fsSL https://ros.rossmel.com/check.sh | bash
+#   curl -fsSL https://repo.rossmel.com/check.sh | bash
 # Solo mira: no instala nada, no pide sudo y no sube nada a ningún lado.
 # Sale con 0 si la app puede correr aquí y con 1 si algo la impide.
 set -u

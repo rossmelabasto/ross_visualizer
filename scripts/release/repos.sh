@@ -47,11 +47,11 @@ gpg --batch --yes --default-key "$SIGNING_FINGERPRINT" --armor --detach-sign -o 
 cat > "$out/rpm/ross.repo" <<EOF
 [ross]
 name=ross
-baseurl=${REPO_URL:-https://ros.rossmel.com}/rpm
+baseurl=${REPO_URL:-https://repo.rossmel.com}/rpm
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
-gpgkey=${REPO_URL:-https://ros.rossmel.com}/key.asc
+gpgkey=${REPO_URL:-https://repo.rossmel.com}/key.asc
 EOF
 
 # --- pacman
