@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>ross_visualizer</title>
-    <meta name="description" content="Visualizer de música en tiempo real: los colores salen de la portada y el movimiento del sonido. Hecho por Rossmel Abasto." />
+    <meta name="description" content="Demo web de ross_visualizer: un visualizador de música en tiempo real, con los colores de la portada y el movimiento del sonido. La app para Linux escucha todo tu sistema y tiene overlay. Hecho por Rossmel Abasto." />
     <meta name="theme-color" content="#0a0c08" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
@@ -22,7 +22,7 @@
     <div id="ui">
       <header class="top">
         <a class="brand" href="https://portfolio.rossmel.com/" target="_blank" rel="noopener">
-          <span class="brand-mark" aria-hidden="true"></span><span>ross_<b>visualizer</b></span>
+          <span class="brand-mark" aria-hidden="true"></span><span>ross_<b>visualizer</b></span><span class="demo-badge" id="demo-badge"></span>
         </a>
         <div class="now" id="now" hidden>
           <img class="now-art" id="now-art" alt="" />
@@ -61,6 +61,10 @@
           <input type="file" id="file-input" accept="audio/*,.mp3,.flac,.m4a,.ogg,.opus,.wav" hidden />
         </div>
         <p class="fine" id="t-privacy"></p>
+        <a class="get-app" id="get-app" href="https://repo.rossmel.com/ross-visualizer/" target="_blank" rel="noopener">
+          <span class="get-app-text"><b id="t-getapp-title"></b><span id="t-getapp-body"></span></span>
+          <span class="get-app-cta" id="t-getapp-cta"></span>
+        </a>
         <button class="start-close icon-btn" id="start-close" hidden></button>
       </section>
 
@@ -103,6 +107,7 @@
         <button class="share" id="btn-share"></button>
         <button class="share" id="btn-tour" hidden></button>
         <p class="fine" id="t-keys"></p>
+        <a class="share" id="btn-getapp" href="https://repo.rossmel.com/ross-visualizer/" target="_blank" rel="noopener"></a>
         <p class="fine credit">
           <span id="t-madeby"></span> <a href="https://portfolio.rossmel.com/" target="_blank" rel="noopener">Rossmel Abasto</a> ·
           <a href="https://github.com/rossmelabasto/ross_visualizer" target="_blank" rel="noopener" id="t-code"></a>

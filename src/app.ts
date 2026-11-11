@@ -413,6 +413,11 @@ export class App {
     src('src-file', icons.file, t.file);
     src('src-demo', icons.sparkles, t.demo);
     $('t-privacy').textContent = t.privacy;
+    $('demo-badge').textContent = t.demoBadge;
+    $('t-getapp-title').textContent = t.getAppTitle;
+    $('t-getapp-body').textContent = t.getAppBody;
+    $('t-getapp-cta').textContent = t.getAppCta;
+    $('btn-getapp').innerHTML = `${icons.monitor}<span>${t.getAppSettings}</span>`;
     $('t-settings').textContent = t.settings;
     $('t-sensitivity').textContent = t.sensitivity;
     $('t-quality').textContent = t.quality;
@@ -820,6 +825,10 @@ export class App {
     $('btn-source').hidden = true;
     $('btn-share').hidden = true;
     $('btn-tour').hidden = false;
+    // The app itself doesn't advertise the app.
+    $('demo-badge').hidden = true;
+    $('get-app').hidden = true;
+    $('btn-getapp').hidden = true;
     const analyser = new PcmAnalyser(48000);
     this.engine.useNative(analyser);
     this.setNow({ title: this.t.listening.native, artist: '' });
