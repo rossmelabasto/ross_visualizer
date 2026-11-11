@@ -199,9 +199,9 @@ export class AsciiScene implements Scene {
     const cellW = Math.round(cellH * 0.6);
     const cols = Math.floor(target.w / cellW) - 4;
     const rows = Math.floor(target.h / cellH);
-    // Keep the text clear of the top bar (~76 px) and the dock (~90 px).
+    // Keep the text clear of the top bar (~76 px) and the two bottom bars (~140 px).
     const topRow = Math.ceil((76 * r.pixelRatio) / cellH);
-    const bottomRow = rows - 1 - Math.ceil((92 * r.pixelRatio) / cellH);
+    const bottomRow = rows - 1 - Math.ceil((150 * r.pixelRatio) / cellH);
 
     this.setLine(0, `${this.prompt} ~ $ visualizer --scene ros`);
     this.setLine(1, frame.title ? `> ${frame.title}` : '> esperando audio...');

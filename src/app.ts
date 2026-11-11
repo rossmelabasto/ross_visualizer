@@ -483,6 +483,11 @@ export class App {
   }
 
   private updateDock() {
+    this.updateDockButtons();
+    $('player-bar').hidden = [...$('player-bar').children].every((b) => (b as HTMLElement).hidden);
+  }
+
+  private updateDockButtons() {
     const kind = this.engine.kind;
     if (kind === 'native') {
       // The buttons drive whatever player the system reports (Spotify, a browser…).
@@ -643,7 +648,7 @@ export class App {
     clearTimeout(this.idleTimer);
     this.idleTimer = window.setTimeout(() => {
       const busy = !$('start').hidden || !$('settings').hidden || this.tour.isOpen || document.activeElement instanceof HTMLInputElement;
-      if (!busy && this.engine.kind !== 'none') document.body.classList.add('idle');
+      if (!busy && (this.engine.kind !== 'none' || isAndroid)) document.body.classList.add('idle');
     }, IDLE_AFTER);
   }
 
@@ -814,7 +819,7 @@ export class App {
       } else if (Math.hypot(dx, dy) < 10) {
         if (!$('settings').hidden) this.toggleSettings(false);
         else if (document.body.classList.contains('idle')) this.wake();
-        else if (this.engine.kind !== 'none') {
+        else if (this.engine.kind !== 'none' || isAndroid) {
           clearTimeout(this.idleTimer);
           document.body.classList.add('idle');
         }

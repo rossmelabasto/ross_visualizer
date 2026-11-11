@@ -68,14 +68,17 @@
         <button class="start-close icon-btn" id="start-close" hidden></button>
       </section>
 
-      <nav class="dock" id="dock" aria-label="Scenes">
-        <button class="dock-btn" id="btn-source"></button>
-        <button class="dock-btn" id="btn-prev" hidden></button>
-        <button class="dock-btn" id="btn-play" hidden></button>
-        <button class="dock-btn" id="btn-next" hidden></button>
-        <span class="dock-sep"></span>
-        <div class="scenes" id="scenes" role="tablist"></div>
-      </nav>
+      <div class="bars">
+        <nav class="dock player-bar" id="player-bar" aria-label="Player">
+          <button class="dock-btn" id="btn-source"></button>
+          <button class="dock-btn" id="btn-prev" hidden></button>
+          <button class="dock-btn" id="btn-play" hidden></button>
+          <button class="dock-btn" id="btn-next" hidden></button>
+        </nav>
+        <nav class="dock" id="dock" aria-label="Scenes">
+          <div class="scenes" id="scenes" role="tablist"></div>
+        </nav>
+      </div>
 
       <aside class="settings" id="settings" hidden>
         <header>

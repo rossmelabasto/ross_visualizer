@@ -278,7 +278,7 @@ a {
   top: 50%;
   transform: translate(-50%, -50%);
   width: min(560px, calc(100% - 32px));
-  max-height: calc(100% - 180px - var(--safe-t) - var(--safe-b));
+  max-height: calc(100% - 240px - var(--safe-t) - var(--safe-b));
   overflow: auto;
   padding: 28px;
   border-radius: 26px;
@@ -481,11 +481,28 @@ kbd {
 }
 
 /* ---------- dock ---------- */
-.dock {
+/* Two bars at the bottom: the player (source, previous, play, next) and the scenes. */
+.bars {
   position: fixed;
   left: 50%;
   bottom: calc(18px + var(--safe-b));
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  z-index: 5;
+  transition: opacity 0.5s, transform 0.5s;
+  pointer-events: none;
+}
+.bars > .dock {
+  pointer-events: auto;
+}
+.player-bar[hidden] {
+  display: none;
+}
+.dock {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -495,9 +512,7 @@ kbd {
   backdrop-filter: blur(20px) saturate(1.3);
   -webkit-backdrop-filter: blur(20px) saturate(1.3);
   border: 1px solid var(--line);
-  z-index: 5;
-  transition: opacity 0.5s, transform 0.5s;
-  max-width: calc(100% - 24px);
+  max-width: 100%;
 }
 .dock-btn {
   display: grid;
@@ -911,7 +926,7 @@ kbd {
 .stats {
   position: fixed;
   left: 16px;
-  bottom: calc(90px + var(--safe-b));
+  bottom: calc(150px + var(--safe-b));
   margin: 0;
   padding: 10px 12px;
   border-radius: 12px;
@@ -926,7 +941,7 @@ kbd {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(92px + var(--safe-b));
+  bottom: calc(152px + var(--safe-b));
   transform: translate(-50%, 10px);
   max-width: min(460px, calc(100% - 32px));
   padding: 10px 16px;
@@ -961,18 +976,19 @@ body.idle {
   cursor: none;
 }
 body.idle .top,
-body.idle .dock {
+body.idle .bars {
   opacity: 0;
   pointer-events: none;
 }
 body.idle .top {
   transform: translateY(-8px);
 }
-body.idle .dock {
+body.idle .bars {
   transform: translate(-50%, 8px);
 }
 body.idle .top > *,
-body.idle .dock * {
+body.idle .bars,
+body.idle .bars * {
   pointer-events: none;
 }
 
@@ -997,7 +1013,7 @@ body.idle .dock * {
   }
   .start {
     top: auto;
-    bottom: calc(84px + var(--safe-b));
+    bottom: calc(146px + var(--safe-b));
     transform: translateX(-50%);
     padding: 22px 18px 18px;
     max-height: calc(100% - 170px - var(--safe-t) - var(--safe-b));

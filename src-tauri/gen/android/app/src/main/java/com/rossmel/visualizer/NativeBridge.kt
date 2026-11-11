@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.audiofx.Visualizer
+import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -54,7 +55,16 @@ class NativeBridge(private val activity: MainActivity, private val webView: WebV
     @JavascriptInterface
     fun requestAudio() {
         main.post {
-            activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO)) { emit("state", stateJson()) }
+            activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO)) {
+                // After a couple of "deny"s Android stops showing the dialog: send the user to the
+                // app's settings, where the permission can still be turned on.
+                if (!hasAudio() && !activity.shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)) {
+                    activity.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", activity.packageName, null))
+                    )
+                }
+                emit("state", stateJson())
+            }
         }
     }
 
