@@ -17,6 +17,7 @@ import { lookupSong, searchSongs, spotifySearchUrl, type Track } from './search/
 import {
   artworkUrl,
   desktopInfo,
+  isAndroid,
   isDesktop,
   setAudioSource,
   watchAudioSources,
@@ -38,6 +39,7 @@ import { Stage } from './stage';
 import { detectLang, safeGet, safeSet, strings, type Lang, type Strings } from './ui/i18n';
 import { icons } from './ui/icons';
 import { Tour } from './ui/tour';
+import { android, androidState, feedAudio, onAndroid, type AndroidMedia, type AndroidState } from './android/native';
 
 const SCENE_IDS = ['fluid', 'nebula', 'galaxy', 'aurora', 'kaleido', 'tunnel', 'ascii'] as const;
 type SceneId = (typeof SCENE_IDS)[number];
@@ -101,9 +103,18 @@ export class App {
   private desktop: DesktopInfo = { desktop: 'other', command: 'ross-visualizer' };
   private overlayOk = false;
   private audio: AudioSources = { source: 'all', apps: [] };
+  private androidState: AndroidState | null = null;
   private readonly tour = new Tour(
     $('tour'),
-    () => ({ t: this.t, lang: this.lang, info: this.desktop, overlay: this.overlayOk }),
+    () => ({
+      t: this.t,
+      lang: this.lang,
+      info: this.desktop,
+      overlay: this.overlayOk,
+      android: this.androidState
+        ? { audio: this.androidState.audio, media: this.androidState.media, grantAudio: () => android.requestAudio(), grantMedia: () => android.openMediaAccess() }
+        : null,
+    }),
     () => {
       safeSet('rv_tour', '1');
       this.wake();
@@ -140,8 +151,9 @@ export class App {
     this.applyAccent(BRAND_PALETTE);
 
     const shared = params.get('t');
-    if (shared && !isDesktop) this.loadShared(shared);
+    if (shared && !isDesktop && !isAndroid) this.loadShared(shared);
     if (isDesktop) this.startDesktop();
+    if (isAndroid) this.startAndroid();
 
     // Audio analysis runs on its own clock: when frames get slow (busy phone, battery saver,
     // a window the compositor throttles) we still see every kick drum.
@@ -636,7 +648,7 @@ export class App {
   }
 
   private async toggleFullscreen() {
-    if (isDesktop) {
+    if (isDesktop || isAndroid) {
       this.windowFullscreen = await toggleWindowFullscreen();
       this.updateFullscreenIcon();
       return;
@@ -650,7 +662,7 @@ export class App {
   }
 
   private updateFullscreenIcon() {
-    const full = isDesktop ? this.windowFullscreen : !!document.fullscreenElement;
+    const full = isDesktop || isAndroid ? this.windowFullscreen : !!document.fullscreenElement;
     $('btn-fullscreen').innerHTML = full ? icons.shrink : icons.expand;
   }
 
@@ -683,7 +695,7 @@ export class App {
       safeSet('rv_lang', this.lang);
       this.applyStrings();
       if (this.now && !this.now.track && this.engine.kind !== 'media' && this.engine.kind !== 'none') {
-        this.setNow({ ...this.now, title: this.t.listening[this.engine.kind] });
+        this.setNow({ ...this.now, title: this.t.listening[isAndroid && this.engine.kind === 'native' ? 'phone' : this.engine.kind] });
       }
     });
     $('btn-settings').addEventListener('click', () => this.toggleSettings());
@@ -759,7 +771,7 @@ export class App {
       const typing = e.target instanceof HTMLInputElement && e.target.type !== 'checkbox' && e.target.type !== 'range';
       if (e.key === 'Escape') {
         if (!$('settings').hidden) this.toggleSettings(false);
-        else if (isDesktop && this.windowFullscreen) this.toggleFullscreen();
+        else if ((isDesktop || isAndroid) && this.windowFullscreen) this.toggleFullscreen();
         else if (!$('start').hidden && this.engine.kind !== 'none') this.hideStart();
         (document.activeElement as HTMLElement | null)?.blur();
         return;
@@ -860,6 +872,59 @@ export class App {
     } catch (e) {
       this.handleError(e);
     }
+  }
+
+  // ---------------------------------------------------------------- Android app
+
+  /** Inside the Android app: everything the phone plays (Visualizer) and its media session. */
+  private startAndroid() {
+    document.body.classList.add('android');
+    this.hideStart();
+    for (const id of ['btn-source', 'btn-share', 'demo-badge', 'get-app', 'btn-getapp']) $(id).hidden = true;
+    $('btn-tour').hidden = false;
+    this.setNow({ title: this.t.listening.phone, artist: '' });
+    this.stage.setCover(null, 3);
+    onAndroid('audio', (a) => {
+      if (!a.ok) {
+        if (a.reason !== 'permission') this.toast(`${this.t.androidNoAudio} (${a.reason})`, 6000);
+        return;
+      }
+      const analyser = new PcmAnalyser(a.rate ?? 44100, 1024);
+      this.engine.useNative(analyser);
+      feedAudio((samples) => analyser.push(samples));
+      this.setNow({ title: this.player?.title || this.t.listening.phone, artist: this.player?.artist ?? '' });
+    });
+    onAndroid('media', (m) => this.onAndroidMedia(m));
+    onAndroid('state', (st) => this.onAndroidState(st));
+    this.onAndroidState(androidState());
+    if (!safeGet('rv_tour')) this.tour.open();
+  }
+
+  private onAndroidState(st: AndroidState) {
+    this.androidState = st;
+    if (st.audio && !st.listening) android.startAudio();
+    if (st.media) android.startMedia();
+    this.tour.refresh();
+  }
+
+  private onAndroidMedia(m: AndroidMedia | null) {
+    if (!m || !m.title) {
+      this.player = null;
+      this.updateDock();
+      this.setNow({ title: this.t.listening.phone, artist: '' });
+      if (this.artKey !== null) this.stage.setCover(null, 3);
+      this.artKey = null;
+      this.artBlob = null;
+      return;
+    }
+    this.player = { player: m.player, status: m.status, title: m.title, artist: m.artist, art: '' };
+    this.updateDock();
+    if (m.art !== undefined && m.artKey !== this.artKey) {
+      this.artKey = m.artKey;
+      this.artBlob = m.art || null;
+      this.stage.setCover(m.art || null, m.title.length);
+    }
+    this.setNow({ title: m.title, artist: m.artist, art: this.artBlob ?? undefined });
   }
 
   private async onSystemTrack(n: SystemTrack | null) {

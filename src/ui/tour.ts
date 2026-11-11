@@ -17,7 +17,14 @@ export class Tour {
 
   constructor(
     private readonly el: HTMLElement,
-    private readonly ctx: () => { t: Strings; lang: Lang; info: DesktopInfo; overlay: boolean },
+    private readonly ctx: () => {
+      t: Strings;
+      lang: Lang;
+      info: DesktopInfo;
+      overlay: boolean;
+      /** On Android: which permissions are on, and how to ask for them. */
+      android: { audio: boolean; media: boolean; grantAudio: () => void; grantMedia: () => void } | null;
+    },
     private readonly onClose: () => void,
   ) {
     el.addEventListener('click', (e) => {
@@ -27,6 +34,8 @@ export class Tour {
       else if (action === 'next') this.go(this.step + 1);
       else if (action === 'back') this.go(this.step - 1);
       else if (action === 'copy') this.copy(target.closest('.tour-code')!);
+      else if (action === 'grant-audio') this.ctx().android?.grantAudio();
+      else if (action === 'grant-media') this.ctx().android?.grantMedia();
     });
   }
 
@@ -64,8 +73,12 @@ export class Tour {
   }
 
   private build() {
-    const { t, lang, info, overlay } = this.ctx();
+    const { t, lang, info, overlay, android } = this.ctx();
     const tt = t.tour;
+    if (android) {
+      this.buildAndroid(t, android);
+      return;
+    }
     const keys = (rows: [string, string][]) =>
       `<dl class="tour-keys">${rows.map(([k, v]) => `<div><dt><kbd>${esc(k)}</kbd></dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
     const note = (s: string) => `<p class="tour-note">${esc(s)}</p>`;
@@ -91,6 +104,22 @@ export class Tour {
       how = `<ol class="tour-steps">${tt.kdeSteps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>${code(overlayCommands(info.command).join('\n'))}`;
     else how = `<p>${esc(tt.otherBody)}</p>${code(overlayCommands(info.command).join('\n'))}`;
     this.steps.push({ title: tt.keysTitle, body: `<p>${esc(tt.keysBody)}</p>${detected}${how}${note(tt.keysResult)}` });
+  }
+
+  /** The phone: what it does, the two permissions (with their buttons) and the scenes. */
+  private buildAndroid(t: Strings, a: { audio: boolean; media: boolean }) {
+    const ta = t.tourAndroid;
+    const note = (s: string) => `<p class="tour-note">${esc(s)}</p>`;
+    const grant = (action: string, done: boolean, label: string, doneLabel: string) =>
+      done
+        ? `<p class="tour-granted">✓ ${esc(doneLabel)}</p>`
+        : `<button type="button" class="tour-btn primary tour-grant" data-tour="${action}">${esc(label)}</button>`;
+    this.steps = [
+      { title: ta.welcomeTitle, body: `<p>${esc(ta.welcomeBody)}</p>` },
+      { title: ta.audioTitle, body: `<p>${esc(ta.audioBody)}</p>${note(ta.audioNote)}${grant('grant-audio', a.audio, ta.audioButton, ta.granted)}` },
+      { title: ta.mediaTitle, body: `<p>${esc(ta.mediaBody)}</p>${note(ta.mediaNote)}${grant('grant-media', a.media, ta.mediaButton, ta.enabled)}` },
+      { title: ta.scenesTitle, body: `<p>${esc(ta.scenesBody)}</p>${note(ta.scenesNote)}` },
+    ];
   }
 
   private go(i: number) {

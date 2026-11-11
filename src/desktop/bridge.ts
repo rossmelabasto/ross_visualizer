@@ -4,7 +4,11 @@
 import type { PcmAnalyser } from '../audio/pcm';
 import type { OverlayOptions } from '../overlay/modes';
 
-export const isDesktop = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+/** The Android app: the same page in a WebView, with the native parts in gen/android. */
+export const isAndroid = isTauri && /Android/i.test(navigator.userAgent);
+/** The Linux desktop app (src-tauri): PipeWire, MPRIS, the overlay and the tray. */
+export const isDesktop = isTauri && !isAndroid;
 
 /** What the system says is playing (MPRIS), as the Rust side reports it. */
 export interface NowPlaying {
@@ -86,6 +90,10 @@ export async function desktopInfo(): Promise<DesktopInfo> {
 }
 
 export async function mediaControl(action: 'play-pause' | 'next' | 'previous') {
+  if (isAndroid) {
+    window.RossAndroid?.mediaControl(action);
+    return;
+  }
   const { invoke } = await core();
   await invoke('media_control', { action });
 }
@@ -97,7 +105,15 @@ export async function setOverlay(mode: string | null) {
 }
 
 /** In the app the page's Fullscreen API isn't wired to the window: ask the window itself. */
+let androidFullscreen = false;
+
 export async function toggleWindowFullscreen(): Promise<boolean> {
+  if (isAndroid) {
+    // Android: hide the status and navigation bars instead.
+    androidFullscreen = !androidFullscreen;
+    window.RossAndroid?.setFullscreen(androidFullscreen);
+    return androidFullscreen;
+  }
   const { getCurrentWindow } = await import('@tauri-apps/api/window');
   const win = getCurrentWindow();
   const next = !(await win.isFullscreen());

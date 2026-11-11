@@ -1039,3 +1039,12 @@ a.share {
     display: none;
   }
 }
+
+.tour-grant {
+  justify-self: start;
+}
+.tour-granted {
+  margin: 0;
+  color: var(--accent);
+  font: 600 13.5px var(--mono);
+}

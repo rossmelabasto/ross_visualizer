@@ -16,7 +16,9 @@
     "shots": "node scripts/shots.mjs",
     "desktop": "tauri dev",
     "desktop:build": "tauri build",
-    "e2e": "scripts/e2e/run.sh"
+    "e2e": "scripts/e2e/run.sh",
+    "tauri": "tauri",
+    "android": "tauri android build --apk"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",
