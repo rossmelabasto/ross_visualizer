@@ -1072,3 +1072,23 @@ a.share {
     align-items: center;
   }
 }
+
+.get-app-links {
+  display: grid;
+  gap: 6px;
+  flex: none;
+}
+.get-app-links a {
+  text-decoration: none;
+}
+.get-app-links a:hover {
+  text-decoration: underline;
+}
+.getapp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.getapp-row[hidden] {
+  display: none;
+}

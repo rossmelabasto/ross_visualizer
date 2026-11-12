@@ -21,7 +21,7 @@
 
     <div id="ui">
       <header class="top">
-        <a class="brand" href="https://portfolio.rossmel.com/" target="_blank" rel="noopener">
+        <a class="brand" href="https://repo.rossmel.com/ross-visualizer/" target="_blank" rel="noopener">
           <span class="brand-mark" aria-hidden="true"></span><span>ross_<b>visualizer</b></span><span class="demo-badge" id="demo-badge"></span>
         </a>
         <div class="now" id="now" hidden>
@@ -61,10 +61,13 @@
           <input type="file" id="file-input" accept="audio/*,.mp3,.flac,.m4a,.ogg,.opus,.wav" hidden />
         </div>
         <p class="fine" id="t-privacy"></p>
-        <a class="get-app" id="get-app" href="https://repo.rossmel.com/ross-visualizer/" target="_blank" rel="noopener">
+        <div class="get-app" id="get-app">
           <span class="get-app-text"><b id="t-getapp-title"></b><span id="t-getapp-body"></span></span>
-          <span class="get-app-cta" id="t-getapp-cta"></span>
-        </a>
+          <span class="get-app-links" id="get-app-links">
+            <a class="get-app-cta" id="getapp-linux" href="https://repo.rossmel.com/ross-visualizer/#install" target="_blank" rel="noopener"></a>
+            <a class="get-app-cta" id="getapp-android" href="https://repo.rossmel.com/ross-visualizer/#android" target="_blank" rel="noopener"></a>
+          </span>
+        </div>
         <button class="start-close icon-btn" id="start-close" hidden></button>
       </section>
 
@@ -110,7 +113,10 @@
         <button class="share" id="btn-share"></button>
         <button class="share" id="btn-tour" hidden></button>
         <p class="fine" id="t-keys"></p>
-        <a class="share" id="btn-getapp" href="https://repo.rossmel.com/ross-visualizer/" target="_blank" rel="noopener"></a>
+        <div class="getapp-row" id="btn-getapp">
+          <a class="share" id="btn-getapp-linux" href="https://repo.rossmel.com/ross-visualizer/#install" target="_blank" rel="noopener"></a>
+          <a class="share" id="btn-getapp-android" href="https://repo.rossmel.com/ross-visualizer/#android" target="_blank" rel="noopener"></a>
+        </div>
         <p class="fine credit">
           <span id="t-madeby"></span> <a href="https://portfolio.rossmel.com/" target="_blank" rel="noopener">Rossmel Abasto</a> ·
           <a href="https://github.com/rossmelabasto/ross_visualizer" target="_blank" rel="noopener" id="t-code"></a>

@@ -435,14 +435,16 @@ export class App {
     $('t-privacy').textContent = t.privacy;
     $('demo-badge').textContent = t.demoBadge;
     $('t-getapp-title').textContent = t.getAppTitle;
-    // On an Android phone's browser, offer the Android app instead of the Linux one.
-    const androidBrowser = !isAndroid && /Android/i.test(navigator.userAgent);
-    $('t-getapp-body').textContent = androidBrowser ? t.getAppBodyAndroid : t.getAppBody;
-    for (const id of ['get-app', 'btn-getapp']) {
-      $<HTMLAnchorElement>(id).href = `https://repo.rossmel.com/ross-visualizer/${androidBrowser ? '#android' : ''}`;
+    $('t-getapp-body').textContent = t.getAppBody;
+    $('getapp-linux').textContent = t.getAppLinux;
+    $('getapp-android').textContent = t.getAppAndroid;
+    $('btn-getapp-linux').innerHTML = `${icons.monitor}<span>${t.getAppLinux.replace(' →', '')}</span>`;
+    $('btn-getapp-android').innerHTML = `${icons.phone}<span>${t.getAppAndroid.replace(' →', '')}</span>`;
+    // On an Android phone's browser, the Android app goes first.
+    if (!isAndroid && /Android/i.test(navigator.userAgent)) {
+      $('get-app-links').prepend($('getapp-android'));
+      $('btn-getapp').prepend($('btn-getapp-android'));
     }
-    $('t-getapp-cta').textContent = t.getAppCta;
-    $('btn-getapp').innerHTML = `${icons.monitor}<span>${t.getAppSettings}</span>`;
     $('t-settings').textContent = t.settings;
     $('t-sensitivity').textContent = t.sensitivity;
     $('t-quality').textContent = t.quality;
