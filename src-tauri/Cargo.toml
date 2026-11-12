@@ -1,6 +1,6 @@
 [package]
 name = "ross-visualizer"
-version = "0.1.1"
+version = "0.2.0"
 description = "Music visualizer that listens to your computer and paints with the album art"
 authors = ["Rossmel Abasto"]
 license = "MIT"

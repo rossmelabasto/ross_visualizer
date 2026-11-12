@@ -189,9 +189,70 @@ jobs:
           chmod +x packages/*.AppImage
           bash scripts/release/smoke.sh "$PWD"/packages/*.AppImage --appimage-extract-and-run
 
+  # The Android app: one APK for ARM64, ARMv7 and x86_64 phones, signed with the release key (a
+  # throwaway key on a branch run). Android has no CI emulator here: it's tried on a real phone.
+  android:
+    needs: build
+    runs-on: ubuntu-24.04
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      NDK_VERSION: 29.0.14206865
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Android NDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$NDK_VERSION" >/dev/null
+          echo "NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+      - run: npm ci
+      - name: Build the APK
+        run: npx tauri android build --apk --target aarch64 armv7 x86_64
+      - name: Sign it
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          ks="$RUNNER_TEMP/release.p12"
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            printf '%s' "$KEYSTORE" | base64 -d > "$ks"
+            alias=ross-visualizer
+          else
+            KEYSTORE_PASSWORD=throwaway-$RANDOM$RANDOM
+            keytool -genkeypair -keystore "$ks" -storetype PKCS12 -alias test -keyalg RSA -keysize 2048 \
+              -validity 30 -storepass "$KEYSTORE_PASSWORD" -keypass "$KEYSTORE_PASSWORD" -dname "CN=test" >/dev/null
+            alias=test
+          fi
+          unsigned=$(find src-tauri/gen/android/app/build/outputs/apk -name '*-release-unsigned.apk' | head -1)
+          mkdir -p apk
+          "$tools/zipalign" -f -p 4 "$unsigned" apk/aligned.apk
+          "$tools/apksigner" sign --ks "$ks" --ks-key-alias "$alias" --ks-pass env:KEYSTORE_PASSWORD \
+            --out "apk/ross-visualizer-$VERSION.apk" apk/aligned.apk
+          rm -f apk/aligned.apk "$ks"
+          "$tools/apksigner" verify --print-certs "apk/ross-visualizer-$VERSION.apk" | head -3
+          ls -la apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: apk/*.apk
+
   publish:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [build, arch, repos, install-test, appimage-test]
+    needs: [build, arch, repos, install-test, appimage-test, android]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -216,6 +277,10 @@ jobs:
         with:
           name: repos
           path: repos
+      - uses: actions/download-artifact@v4
+        with:
+          name: android
+          path: packages
       - name: Create the GitHub release
         run: |
           tar czf ross-visualizer-repos.tar.gz -C repos .

@@ -2,6 +2,15 @@
 
 Everything before 1.0 is an alpha: expect rough edges and tell me about them in the [issues](https://github.com/rossmelabasto/ross_visualizer/issues).
 
+## 0.2.0
+
+### New
+
+- **Android app (alpha).** The same scenes on your phone, reacting to everything it plays (Spotify, YouTube, any app) and painting with the artwork of the song that's on, with previous, play/pause and next. A tour walks through the two permissions it needs and what each is for.
+- **Overlay on Android:** the seven styles above your other apps, letting your touches through, with an opacity slider. It keeps going with the app closed and turns off from its notification.
+- **Two bars at the bottom**, on the web, Linux and Android: one for the player (previous, play/pause, next) and one for the scenes. Stacked when the screen is upright, side by side when it's wide.
+- The Android app gets updates through the [F-Droid repository](https://repo.rossmel.com/ross-visualizer/#android) of repo.rossmel.com, or as a direct APK download.
+
 ## 0.1.1
 
 ### New
