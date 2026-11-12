@@ -23,7 +23,14 @@ export class Tour {
       info: DesktopInfo;
       overlay: boolean;
       /** On Android: which permissions are on, and how to ask for them. */
-      android: { audio: boolean; media: boolean; grantAudio: () => void; grantMedia: () => void } | null;
+      android: {
+        audio: boolean;
+        media: boolean;
+        overlay: boolean;
+        grantAudio: () => void;
+        grantMedia: () => void;
+        grantOverlay: () => void;
+      } | null;
     },
     private readonly onClose: () => void,
   ) {
@@ -36,6 +43,7 @@ export class Tour {
       else if (action === 'copy') this.copy(target.closest('.tour-code')!);
       else if (action === 'grant-audio') this.ctx().android?.grantAudio();
       else if (action === 'grant-media') this.ctx().android?.grantMedia();
+      else if (action === 'grant-overlay') this.ctx().android?.grantOverlay();
     });
   }
 
@@ -107,7 +115,7 @@ export class Tour {
   }
 
   /** The phone: what it does, the two permissions (with their buttons) and the scenes. */
-  private buildAndroid(t: Strings, a: { audio: boolean; media: boolean }) {
+  private buildAndroid(t: Strings, a: { audio: boolean; media: boolean; overlay: boolean }) {
     const ta = t.tourAndroid;
     const note = (s: string) => `<p class="tour-note">${esc(s)}</p>`;
     const grant = (action: string, done: boolean, label: string, doneLabel: string) =>
@@ -119,6 +127,7 @@ export class Tour {
       { title: ta.audioTitle, body: `<p>${esc(ta.audioBody)}</p>${note(ta.audioNote)}${grant('grant-audio', a.audio, ta.audioButton, ta.granted)}` },
       { title: ta.mediaTitle, body: `<p>${esc(ta.mediaBody)}</p>${note(ta.mediaNote)}${grant('grant-media', a.media, ta.mediaButton, ta.enabled)}` },
       { title: ta.scenesTitle, body: `<p>${esc(ta.scenesBody)}</p>${note(ta.scenesNote)}` },
+      { title: ta.overlayTitle, body: `<p>${esc(ta.overlayBody)}</p>${note(ta.overlayNote)}${grant('grant-overlay', a.overlay, ta.overlayButton, ta.enabled)}` },
     ];
   }
 

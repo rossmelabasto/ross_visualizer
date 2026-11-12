@@ -100,6 +100,11 @@ export async function mediaControl(action: 'play-pause' | 'next' | 'previous') {
 
 /** Turn the overlay on with a style, or off with null. */
 export async function setOverlay(mode: string | null) {
+  if (isAndroid) {
+    const { android } = await import('../android/native');
+    android.setOverlay(mode, androidOverlayOptions());
+    return;
+  }
   const { invoke } = await core();
   await invoke('set_overlay', { mode });
 }
@@ -123,6 +128,7 @@ export async function toggleWindowFullscreen(): Promise<boolean> {
 
 /** False on sessions without layer-shell (GNOME, X11), where there's no overlay to offer. */
 export async function overlaySupported() {
+  if (isAndroid) return true;
   const { invoke } = await core();
   return invoke<boolean>('overlay_supported');
 }
@@ -142,7 +148,26 @@ export async function watchOverlayOptions(cb: (options: OverlayOptions) => void)
   cb(await invoke<OverlayOptions>('overlay_options'));
 }
 
+/** On Android the settings of every style live in the page (localStorage) and go to the service. */
+export function androidOverlayOptions(): OverlayOptions {
+  try {
+    return JSON.parse(localStorage.getItem('rv_overlay_options') || '{}') as OverlayOptions;
+  } catch {
+    return {};
+  }
+}
+
 export async function setOverlayOptions(options: OverlayOptions) {
+  if (isAndroid) {
+    try {
+      localStorage.setItem('rv_overlay_options', JSON.stringify(options));
+    } catch {
+      /* not remembered */
+    }
+    const { android } = await import('../android/native');
+    android.setOverlayOptions(options);
+    return;
+  }
   const { invoke } = await core();
   await invoke('set_overlay_options', { options });
 }

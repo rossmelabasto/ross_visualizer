@@ -14,6 +14,7 @@ import {
 } from '../desktop/bridge';
 import type { Scene } from '../gl/renderer';
 import { Stage } from '../stage';
+import { android, feedAudio, onAndroid } from '../android/native';
 import { isOverlayMode, optionOf, OVERLAY_MODES, OVERLAY_OPTIONS, type OverlayMode, type OverlayOptions } from './modes';
 import { createOverlayScenes, OVERLAY_BLOOM, SHOWN_IN_SILENCE } from './scenes';
 
@@ -68,6 +69,7 @@ class OverlayApp {
     // and lets the clicks through for a few seconds.
     window.addEventListener('pointermove', () => this.peek());
     if (isDesktop) this.start();
+    else if (params.get('android') === '1' && window.RossAndroid) this.startAndroid();
     else this.preview();
     window.setInterval(() => this.analyze(), 1000 / 60);
     requestAnimationFrame((t) => this.loop(t));
@@ -91,6 +93,38 @@ class OverlayApp {
       this.setMode(m, !first);
       first = false;
     });
+  }
+
+  /** In Android's overlay window (OverlayService): the service sends audio, song and style. */
+  private startAndroid() {
+    this.stage.setCover(null, 3);
+    // Android draws this window at most 80 % opaque so touches go through: make up for it.
+    this.stage.renderer.canvas.style.filter = 'brightness(1.3) saturate(1.2)';
+    let first = true;
+    onAndroid('audio', (a) => {
+      if (!a.ok) return;
+      const analyser = new PcmAnalyser(a.rate ?? 44100, 1024);
+      this.engine.useNative(analyser);
+      feedAudio((samples) => analyser.push(samples));
+    });
+    onAndroid('media', (m) => {
+      this.title = m?.title ? `${m.title}${m.artist ? ` - ${m.artist}` : ''}` : '';
+      if (!m?.title) {
+        if (this.artKey !== null) this.stage.setCover(null, 3);
+        this.artKey = null;
+        return;
+      }
+      if (m.art !== undefined && m.artKey !== this.artKey) {
+        this.artKey = m.artKey;
+        this.stage.setCover(m.art || null, this.title.length);
+      }
+    });
+    onAndroid('overlay', (o) => {
+      this.options = o.options as OverlayOptions;
+      if (isOverlayMode(o.mode)) this.setMode(o.mode, !first);
+      first = false;
+    });
+    android.ready();
   }
 
   private setMode(m: OverlayMode, fade = true) {

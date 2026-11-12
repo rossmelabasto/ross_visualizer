@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="overlay_on">Overlay is on. Tap to open the app.</string>
+  <string name="overlay_stop">Turn off</string>
+</resources>

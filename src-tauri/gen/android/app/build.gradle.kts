@@ -81,3 +81,13 @@ dependencies {
 }
 
 apply(from = file("tauri.build.gradle.kts"))
+
+// The overlay window is a plain WebView (OverlayService), outside Tauri: it loads the built page
+// (dist/, which `tauri android build` makes first) from the APK's assets.
+val overlayWeb = layout.buildDirectory.get().asFile.resolve("generated/overlayWeb")
+val copyOverlayWeb by tasks.registering(Copy::class) {
+    from(rootProject.file("../../../dist"))
+    into(overlayWeb)
+}
+android.sourceSets.getByName("main").assets.srcDir(overlayWeb)
+tasks.named("preBuild") { dependsOn(copyOverlayWeb) }

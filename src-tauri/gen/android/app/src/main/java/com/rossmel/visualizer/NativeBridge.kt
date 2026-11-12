@@ -45,6 +45,8 @@ class NativeBridge(private val activity: MainActivity, private val webView: WebV
     private fun stateJson(): String = JSONObject()
         .put("audio", hasAudio())
         .put("media", media.hasAccess())
+        .put("overlayAllowed", OverlayService.canDraw(activity))
+        .put("overlay", OverlayService.mode ?: JSONObject.NULL)
         .put("listening", visualizer?.enabled == true)
         .put("sdk", Build.VERSION.SDK_INT)
         .toString()
@@ -135,6 +137,49 @@ class NativeBridge(private val activity: MainActivity, private val webView: WebV
     @JavascriptInterface
     fun mediaControl(action: String) {
         main.post { media.control(action) }
+    }
+
+    /** "Display over other apps" is only switched on by the user, in the system settings. */
+    @JavascriptInterface
+    fun requestOverlay() {
+        main.post {
+            activity.startActivity(
+                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.fromParts("package", activity.packageName, null))
+            )
+        }
+    }
+
+    /** Turn the overlay on with a style (and every style's settings, as JSON), or off with "". */
+    @JavascriptInterface
+    fun setOverlay(mode: String, options: String) {
+        main.post {
+            val intent = Intent(activity, OverlayService::class.java)
+            if (mode.isEmpty()) {
+                activity.stopService(intent)
+            } else if (!OverlayService.canDraw(activity)) {
+                requestOverlay()
+            } else {
+                // Android 13+: the overlay's notification (with its "Turn off") needs this.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    activity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS)) {}
+                }
+                intent.putExtra(OverlayService.EXTRA_MODE, mode).putExtra(OverlayService.EXTRA_OPTIONS, options)
+                ContextCompat.startForegroundService(activity, intent)
+            }
+            main.postDelayed({ emit("state", stateJson()) }, 400)
+        }
+    }
+
+    @JavascriptInterface
+    fun setOverlayOptions(options: String) {
+        main.post {
+            if (OverlayService.mode == null) return@post
+            ContextCompat.startForegroundService(
+                activity, Intent(activity, OverlayService::class.java).putExtra(OverlayService.EXTRA_OPTIONS, options),
+            )
+        }
     }
 
     /** The page's fullscreen button: hide the status and navigation bars. */

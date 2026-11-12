@@ -11,6 +11,11 @@ interface Bridge {
   startMedia(): void;
   mediaControl(action: string): void;
   setFullscreen(on: boolean): void;
+  requestOverlay(): void;
+  setOverlay(mode: string, options: string): void;
+  setOverlayOptions(options: string): void;
+  /** Only on the overlay window's page (OverlayService): it's ready for data. */
+  ready(): void;
 }
 
 declare global {
@@ -27,6 +32,10 @@ export interface AndroidState {
   /** Notification access, which lets us read the media sessions. */
   media: boolean;
   listening: boolean;
+  /** "Display over other apps". */
+  overlayAllowed: boolean;
+  /** The overlay style that's on, or null. */
+  overlay: string | null;
   sdk: number;
 }
 
@@ -47,7 +56,13 @@ export interface AndroidMedia {
   art?: string;
 }
 
+export interface AndroidOverlay {
+  mode: string;
+  options: Record<string, Record<string, string | number>>;
+}
+
 interface Handlers {
+  overlay?: (o: AndroidOverlay) => void;
   state?: (s: AndroidState) => void;
   audio?: (a: AndroidAudio) => void;
   media?: (m: AndroidMedia | null) => void;
@@ -63,7 +78,7 @@ export function onAndroid<K extends keyof Handlers>(type: K, fn: NonNullable<Han
 
 export function androidState(): AndroidState {
   const raw = bridge()?.state();
-  return raw ? (JSON.parse(raw) as AndroidState) : { audio: false, media: false, listening: false, sdk: 0 };
+  return raw ? (JSON.parse(raw) as AndroidState) : { audio: false, media: false, listening: false, overlayAllowed: false, overlay: null, sdk: 0 };
 }
 
 /** Each waveform is 8-bit unsigned, centred on 128. */
@@ -83,4 +98,8 @@ export const android = {
   startMedia: () => bridge()?.startMedia(),
   mediaControl: (action: string) => bridge()?.mediaControl(action),
   setFullscreen: (on: boolean) => bridge()?.setFullscreen(on),
+  requestOverlay: () => bridge()?.requestOverlay(),
+  setOverlay: (mode: string | null, options: unknown) => bridge()?.setOverlay(mode ?? '', JSON.stringify(options ?? {})),
+  setOverlayOptions: (options: unknown) => bridge()?.setOverlayOptions(JSON.stringify(options ?? {})),
+  ready: () => bridge()?.ready(),
 };

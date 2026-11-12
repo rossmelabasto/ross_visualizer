@@ -15,6 +15,7 @@ import { NebulaScene } from './scenes/nebula';
 import { TUNNEL_VERSIONS, TunnelScene } from './scenes/tunnel';
 import { lookupSong, searchSongs, spotifySearchUrl, type Track } from './search/itunes';
 import {
+  androidOverlayOptions,
   artworkUrl,
   desktopInfo,
   isAndroid,
@@ -112,7 +113,14 @@ export class App {
       info: this.desktop,
       overlay: this.overlayOk,
       android: this.androidState
-        ? { audio: this.androidState.audio, media: this.androidState.media, grantAudio: () => android.requestAudio(), grantMedia: () => android.openMediaAccess() }
+        ? {
+            audio: this.androidState.audio,
+            media: this.androidState.media,
+            overlay: this.androidState.overlayAllowed,
+            grantAudio: () => android.requestAudio(),
+            grantMedia: () => android.openMediaAccess(),
+            grantOverlay: () => android.requestOverlay(),
+          }
         : null,
     }),
     () => {
@@ -887,6 +895,9 @@ export class App {
     this.hideStart();
     for (const id of ['btn-source', 'btn-share', 'demo-badge', 'get-app', 'btn-getapp']) $(id).hidden = true;
     $('btn-tour').hidden = false;
+    this.overlayOk = true;
+    $('overlay-field').hidden = false;
+    this.overlayOptions = androidOverlayOptions();
     this.setNow({ title: this.t.listening.phone, artist: '' });
     this.stage.setCover(null, 3);
     onAndroid('audio', (a) => {
@@ -907,6 +918,10 @@ export class App {
 
   private onAndroidState(st: AndroidState) {
     this.androidState = st;
+    if (st.overlay !== this.overlayMode) {
+      this.overlayMode = st.overlay;
+      this.renderOverlayModes();
+    }
     if (st.audio && !st.listening) android.startAudio();
     if (st.media) android.startMedia();
     this.tour.refresh();
@@ -985,7 +1000,7 @@ export class App {
   }
 
   private renderOverlayModes() {
-    if (!isDesktop) return;
+    if (!isDesktop && !isAndroid) return;
     const box = $('overlay-modes');
     box.innerHTML = '';
     const add = (mode: string | null, label: string) => {
@@ -993,7 +1008,10 @@ export class App {
       b.textContent = label;
       b.dataset.mode = mode ?? 'off';
       b.classList.toggle('on', mode === this.overlayMode);
-      b.addEventListener('click', () => setOverlay(mode));
+      b.addEventListener('click', () => {
+        if (isAndroid && mode && !this.androidState?.overlayAllowed) this.toast(this.t.androidOverlayPermission, 6000);
+        setOverlay(mode);
+      });
       box.appendChild(b);
     };
     add(null, this.t.overlayOff);
@@ -1007,7 +1025,11 @@ export class App {
     box.innerHTML = '';
     const mode = this.overlayMode as OverlayMode | null;
     const specs = mode ? OVERLAY_OPTIONS[mode] : undefined;
-    if (!mode || !specs || !this.overlayOptions) return;
+    if (!mode) return;
+    if (!specs || !this.overlayOptions) {
+      if (isAndroid) box.appendChild(this.androidOpacityRow());
+      return;
+    }
     const all = this.overlayOptions;
     const set = (key: string, value: string | number) => {
       // Build on the latest settings, not on the ones these controls were drawn with:
@@ -1058,6 +1080,32 @@ export class App {
       }
       box.appendChild(row);
     }
+    if (isAndroid) box.appendChild(this.androidOpacityRow());
+  }
+
+  /** Android: how opaque the overlay window is (up to the 80 % that still lets touches through). */
+  private androidOpacityRow() {
+    const row = document.createElement('div');
+    row.className = 'overlay-option';
+    row.dataset.key = 'opacity';
+    const label = document.createElement('span');
+    label.textContent = this.t.overlayOption.opacity;
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = '0.2';
+    input.max = '0.8';
+    input.step = '0.05';
+    const saved = Number(this.overlayOptions?.android?.opacity);
+    input.value = String(saved >= 0.2 && saved <= 0.8 ? saved : 0.8);
+    input.setAttribute('aria-label', label.textContent);
+    input.addEventListener('input', () => {
+      const now = this.overlayOptions ?? {};
+      const next = { ...now, android: { ...now.android, opacity: Number(input.value) } };
+      this.overlayOptions = next;
+      setOverlayOptions(next);
+    });
+    row.append(label, input);
+    return row;
   }
 
   private cycleOverlay() {
