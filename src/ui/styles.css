@@ -1064,3 +1064,11 @@ a.share {
   color: var(--accent);
   font: 600 13.5px var(--mono);
 }
+
+/* Landscape has room for both bars on one row: the player next to the scenes. */
+@media (orientation: landscape) and (min-width: 560px) {
+  .bars {
+    flex-direction: row;
+    align-items: center;
+  }
+}
