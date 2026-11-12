@@ -76,6 +76,10 @@ sudo dnf remove ross-visualizer
 sudo rm /etc/yum.repos.d/ross.repo
 ```
 
+## Android
+
+Android 7.0 or newer. Add the F-Droid repository (in F-Droid, Droid-ify or Neo Store) from [repo.rossmel.com/ross-visualizer](https://repo.rossmel.com/ross-visualizer/#android) and it updates by itself, or download the APK from the same page. The first time, a tour asks for the audio permission (Android files the system's visualizer under the microphone; nothing is recorded) and for notification access (to see the song and its artwork; it doesn't read your notifications). The overlay also needs "Display over other apps".
+
 ## AppImage
 
 Download it from the [releases page](https://github.com/rossmelabasto/ross_visualizer/releases), make it executable and run it. It doesn't update itself, and your system still needs `pipewire` and `playerctl`.

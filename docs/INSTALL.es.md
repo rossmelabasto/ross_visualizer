@@ -76,6 +76,10 @@ sudo dnf remove ross-visualizer
 sudo rm /etc/yum.repos.d/ross.repo
 ```
 
+## Android
+
+Android 7.0 o más nuevo. Agrega el repositorio F-Droid (en F-Droid, Droid-ify o Neo Store) desde [repo.rossmel.com/ross-visualizer](https://repo.rossmel.com/ross-visualizer/#android) y se actualiza sola, o descarga el APK desde la misma página. La primera vez, un tutorial te pide el permiso de audio (Android clasifica ahí al visualizador del sistema; no se graba nada) y el acceso a notificaciones (para ver la canción y su portada; no lee tus notificaciones). El overlay necesita además "Mostrar sobre otras apps".
+
 ## AppImage
 
 Descárgalo de la [página de versiones](https://github.com/rossmelabasto/ross_visualizer/releases), hazlo ejecutable y ábrelo. No se actualiza solo y tu sistema igual necesita `pipewire` y `playerctl`.

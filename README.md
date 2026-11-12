@@ -32,6 +32,10 @@ curl -fsSL https://repo.rossmel.com/check.sh | bash
 
 There are signed repositories for pacman (CachyOS, Arch), APT (Ubuntu, Debian) and DNF (Fedora), plus an AppImage. AUR is coming soon. The commands, requirements and packages are at **[repo.rossmel.com](https://repo.rossmel.com/ross-visualizer/)** and in the [install guide](docs/INSTALL.md); what changed in each version is in the [changelog](CHANGELOG.md).
 
+## Android app
+
+The same page in a Tauri v2 Android build (`src-tauri/gen/android`). `NativeBridge.kt` reads Android's audio Visualizer on session 0 (the mix of everything the phone plays) and the active media sessions (through notification access), and the page reaches it as `window.RossAndroid` (`src/android/native.ts`). `OverlayService.kt` draws `overlay.html` in an untouchable window above other apps, at most 80 % opaque so touches go through. Install it from the [F-Droid repository or as an APK](https://repo.rossmel.com/ross-visualizer/#android); `npm run android` builds it (Android SDK, NDK and JDK 21).
+
 ## Desktop app
 
 The same visualizer in a [Tauri](https://tauri.app) app (`src-tauri/`). There's no source to pick: it hears the whole system and paints with the artwork of whatever is playing.
@@ -92,7 +96,6 @@ npm run build
 
 ## Roadmap
 
-- Android app with an overlay mode, reading the system's media session.
 - More scenes.
 
 ## Credits

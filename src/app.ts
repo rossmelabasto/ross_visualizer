@@ -435,7 +435,12 @@ export class App {
     $('t-privacy').textContent = t.privacy;
     $('demo-badge').textContent = t.demoBadge;
     $('t-getapp-title').textContent = t.getAppTitle;
-    $('t-getapp-body').textContent = t.getAppBody;
+    // On an Android phone's browser, offer the Android app instead of the Linux one.
+    const androidBrowser = !isAndroid && /Android/i.test(navigator.userAgent);
+    $('t-getapp-body').textContent = androidBrowser ? t.getAppBodyAndroid : t.getAppBody;
+    for (const id of ['get-app', 'btn-getapp']) {
+      $<HTMLAnchorElement>(id).href = `https://repo.rossmel.com/ross-visualizer/${androidBrowser ? '#android' : ''}`;
+    }
     $('t-getapp-cta').textContent = t.getAppCta;
     $('btn-getapp').innerHTML = `${icons.monitor}<span>${t.getAppSettings}</span>`;
     $('t-settings').textContent = t.settings;
