@@ -19,6 +19,7 @@ export const OVERLAY_OPTIONS: Partial<Record<OverlayMode, OptionSpec[]>> = {
   halo: [
     { key: 'color', kind: 'choice', values: ['cover', 'white', 'black'], default: 'cover' },
     { key: 'intensity', kind: 'range', min: 0.4, max: 3, step: 0.1, default: 1 },
+    { key: 'softness', kind: 'range', min: 0, max: 1, step: 0.05, default: 1 },
   ],
   horizon: [
     { key: 'position', kind: 'choice', values: EDGES, default: 'bottom' },

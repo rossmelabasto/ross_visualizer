@@ -8,6 +8,7 @@ Todo lo anterior a la 1.0 es alfa: puede tener detalles, y me sirve que me los c
 
 - **App para Android (alfa).** Las mismas escenas en tu celular, reaccionando a todo lo que suena (Spotify, YouTube, cualquier app) y pintando con la portada de la canción, con anterior, play/pausa y siguiente. Un tutorial te guía por los dos permisos que necesita y para qué sirve cada uno.
 - **Overlay en Android:** los siete estilos encima de tus otras apps, dejando pasar tus toques, con un slider de opacidad. Sigue andando con la app cerrada y se apaga desde su notificación.
+- **Suavidad del Halo**, en Linux y Android: desde el brillo que se difumina hacia la pantalla hasta una franja sólida de borde nítido.
 - **Dos barras abajo**, en la web, Linux y Android: una para el reproductor (anterior, play/pausa, siguiente) y otra para las escenas. Apiladas con la pantalla vertical, lado a lado cuando es ancha.
 - La app de Android se actualiza con el [repositorio F-Droid](https://repo.rossmel.com/ross-visualizer/#android) de repo.rossmel.com, o se descarga directo como APK.
 

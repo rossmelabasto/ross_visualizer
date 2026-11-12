@@ -148,12 +148,16 @@ ${levelsGlsl(24)}
 uniform vec2 uPulses[4];  // age (s), strength
 uniform float uTint;      // 0 the cover's colors, 1 white, 2 black
 uniform float uIntensity; // how far the glow reaches into the screen
+uniform float uSoftness;  // 1 a glow that fades into the screen, 0 a solid band with a crisp edge
 
 // Color in rgb, opacity in a.
 vec4 edge(float d, float u) {
   float lv = level(u);
   float thick = (0.006 + lv * 0.02 + uMedBands.x * 0.01) * uIntensity;
-  float glow = exp(-d / thick) * (0.3 + lv * 0.8) + exp(-d * 400.0) * (0.25 + lv * 0.5);
+  float soft = exp(-d / thick) * (0.3 + lv * 0.8) + exp(-d * 400.0) * (0.25 + lv * 0.5);
+  float width = thick * 2.2;
+  float solid = (1.0 - smoothstep(width - max(width * uSoftness, 0.0015), width, d)) * (0.55 + lv * 0.45);
+  float glow = mix(solid, soft, uSoftness);
   // Each kick sends a flash from the bottom up both sides; they overlap instead of restarting.
   float pulse = 0.0;
   for (int i = 0; i < 4; i++) {
@@ -184,7 +188,9 @@ void main() {
   protected draw(r: Renderer, frame: FrameState, _t: Target, p: Program) {
     r.gl.uniform1fv(p.loc('uLevels[0]'), this.bands.update(frame));
     r.gl.uniform2fv(p.loc('uPulses[0]'), this.pulses.update(frame));
-    p.f('uTint', ['cover', 'white', 'black'].indexOf(this.opt('color') as string)).f('uIntensity', this.opt('intensity') as number);
+    p.f('uTint', ['cover', 'white', 'black'].indexOf(this.opt('color') as string))
+      .f('uIntensity', this.opt('intensity') as number)
+      .f('uSoftness', this.opt('softness') as number);
     r.drawFullscreen();
   }
 }

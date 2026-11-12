@@ -45,7 +45,7 @@ const es = {
   overlay: 'Overlay',
   overlayOff: 'Apagado',
   overlays: { halo: 'Halo', horizon: 'Horizonte', orbit: 'Órbita', curtain: 'Cortina', embers: 'Brasas', rain: 'Lluvia rOS', wave: 'Onda' },
-  overlayOption: { position: 'Posición', height: 'Altura', size: 'Tamaño', color: 'Color', intensity: 'Intensidad', inside: 'Adentro', opacity: 'Opacidad' } as Record<string, string>,
+  overlayOption: { position: 'Posición', height: 'Altura', size: 'Tamaño', color: 'Color', intensity: 'Intensidad', inside: 'Adentro', opacity: 'Opacidad', softness: 'Suavidad' } as Record<string, string>,
   overlayValue: {
     cover: 'Portada',
     kaleido: 'Caleidoscopio',
@@ -197,7 +197,7 @@ const en: Strings = {
   overlay: 'Overlay',
   overlayOff: 'Off',
   overlays: { halo: 'Halo', horizon: 'Horizon', orbit: 'Orbit', curtain: 'Curtain', embers: 'Embers', rain: 'rOS rain', wave: 'Wave' },
-  overlayOption: { position: 'Position', height: 'Height', size: 'Size', color: 'Color', intensity: 'Intensity', inside: 'Inside', opacity: 'Opacity' },
+  overlayOption: { position: 'Position', height: 'Height', size: 'Size', color: 'Color', intensity: 'Intensity', inside: 'Inside', opacity: 'Opacity', softness: 'Softness' },
   overlayValue: {
     cover: 'Artwork',
     kaleido: 'Kaleidoscope',
